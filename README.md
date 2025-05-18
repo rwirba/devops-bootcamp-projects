@@ -19,7 +19,7 @@ Welcome to the **DevOps Bootcamp Projects** repository. This repository is desig
 | Branch Name            | Description                                           |
 |------------------------|-------------------------------------------------------|
 | `main`                 | General overview and navigation to projects           |
-| `project-1-ezlearn`    | Full Jenkins + Ansible pipeline for Java app (`ezlearn`) |
+| `project-1-cicd`       | Full Jenkins + Ansible pipeline for Java app (`ezlearn`) |
 | `project-2-k8s`        | Dockerized microservices deployed to Kubernetes       |
 | `project-3-iac-aws`    | Terraform IaC + Jenkins + Vault on AWS infrastructure |
 | `project-4-devsecops`  | Secure CI/CD pipeline with SonarQube + Trivy + Nexus  |
