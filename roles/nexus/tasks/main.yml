@@ -1,0 +1,57 @@
+---
+- name: Create nexus user
+  ansible.builtin.user:
+    name: nexus
+    shell: /bin/false
+    create_home: no
+
+- name: Download Nexus
+  ansible.builtin.get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /tmp/nexus.tar.gz
+
+- name: Extract Nexus
+  ansible.builtin.unarchive:
+    src: /tmp/nexus.tar.gz
+    dest: /opt/
+    remote_src: yes
+
+- name: Set run_as_user
+  ansible.builtin.lineinfile:
+    path: /opt/nexus-3*/bin/nexus.rc
+    regexp: '^#?run_as_user=.*'
+    line: 'run_as_user="nexus"'
+
+- name: Change ownership of Nexus directories
+  ansible.builtin.file:
+    path: /opt/nexus-3*
+    state: directory
+    owner: nexus
+    group: nexus
+    recurse: yes
+
+- name: Create Nexus systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nexus.service
+    content: |
+      [Unit]
+      Description=Nexus service
+      After=network.target
+
+      [Service]
+      Type=forking
+      LimitNOFILE=65536
+      ExecStart=/opt/nexus-3*/bin/nexus start
+      ExecStop=/opt/nexus-3*/bin/nexus stop
+      User=nexus
+      Restart=on-abort
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd and start Nexus
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    name: nexus
+    enabled: yes
+    state: started

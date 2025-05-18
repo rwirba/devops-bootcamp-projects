@@ -1,0 +1,10 @@
+---
+- name: Deploy ezlearn.war to Tomcat
+  hosts: tomcat
+  become: true
+  vars:
+    war_file: /var/lib/jenkins/workspace/ezlearn-class/target/ezlearn.war
+    tomcat_webapps_dir: /var/lib/tomcat9/webapps
+    tomcat_service_name: tomcat9
+  roles:
+    - deploy_app

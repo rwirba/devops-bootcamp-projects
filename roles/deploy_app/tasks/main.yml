@@ -1,0 +1,26 @@
+---
+- name: Ensure Tomcat webapps directory exists
+  ansible.builtin.file:
+    path: "{{ tomcat_webapps_dir }}"
+    state: directory
+    owner: tomcat
+    group: tomcat
+    mode: '0755'
+
+- name: Remove old WAR file
+  ansible.builtin.file:
+    path: "{{ tomcat_webapps_dir }}/ezlearn.war"
+    state: absent
+
+- name: Deploy new WAR file
+  ansible.builtin.copy:
+    src: "{{ war_file }}"
+    dest: "{{ tomcat_webapps_dir }}/ezlearn.war"
+    owner: tomcat
+    group: tomcat
+    mode: '0644'
+
+- name: Restart Tomcat
+  ansible.builtin.service:
+    name: "{{ tomcat_service_name }}"
+    state: restarted

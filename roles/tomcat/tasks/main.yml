@@ -1,0 +1,12 @@
+---
+- name: Install Tomcat 9
+  ansible.builtin.apt:
+    name: tomcat9
+    state: present
+    update_cache: yes
+
+- name: Start and enable Tomcat
+  ansible.builtin.service:
+    name: tomcat9
+    state: started
+    enabled: yes

@@ -1,0 +1,31 @@
+---
+- name: Setup common tools on all servers
+  hosts: all
+  roles:
+    - common
+    - maven
+
+- name: Setup Jenkins Master
+  hosts: jenkins_master
+  roles:
+    - jenkins_master
+
+- name: Setup Jenkins Slave
+  hosts: jenkins_slave
+  roles:
+    - jenkins_slave
+
+- name: Setup SonarQube
+  hosts: sonarqube
+  roles:
+    - sonarqube
+
+- name: Setup Nexus
+  hosts: nexus
+  roles:
+    - nexus
+
+- name: Setup Tomcat
+  hosts: tomcat
+  roles:
+    - tomcat
