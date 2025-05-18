@@ -162,11 +162,25 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 From Jenkins UI:
 
 - Create a Freestyle or Pipeline job
-- Run this shell step:
 
+# How to Create a Jenkins Job:
+
+  - From Jenkins Dashboard, click New Item
+  
+  - Enter an item name: infrastructure-setup
+  
+  - Select Freestyle project and click OK
+  
+  - Scroll to Build Environment, tick "Use secret text(s) or file(s)" if needed
+  
+  - Scroll to Build → Click Add build step → Execute shell
+
+Paste the command below:
 ```bash
 ansible-playbook -i inventory/prod/hosts.ini playbooks/site.yml
 ```
+- Click save 
+- click Build Now
 
 This will install:
 - SonarQube
