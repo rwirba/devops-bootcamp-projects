@@ -91,7 +91,9 @@ git clone https://github.com/yourusername/ezlearn-class.git
 cd ezlearn-class
 ```
 
-###  Step 4: Install Ansible
+###  Step 4: Install Ansible (on Jenkins Slave only)
+
+Jenkins jobs will run on the slave node (agent), so Ansible must be installed on the Jenkins Slave where jobs are executed. Connect to your slave node and run:
 
 ```bash
 sudo apt install software-properties-common -y
