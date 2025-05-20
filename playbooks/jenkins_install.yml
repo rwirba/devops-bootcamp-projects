@@ -1,19 +1,8 @@
 ---
-- name: Jenkins Master and Slave Setup
-  hosts: jenkins_master:jenkins_slave
-  become: yes
-  roles:
-    - common
-    - maven
-
-- name: Install Jenkins Master
-  hosts: jenkins_master
-  become: yes
-  roles:
-    - jenkins_master
-
-- name: Configure Jenkins Slave
+- name: Prepare Jenkins Slave Node
   hosts: jenkins_slave
   become: yes
   roles:
-    - jenkins_slave
+    - common     # installs Java, unzip, curl, git
+    - maven      # installs Maven
+    - jenkins_slave  # creates jenkins user, sets up SSH

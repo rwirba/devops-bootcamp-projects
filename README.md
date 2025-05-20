@@ -82,20 +82,12 @@ Repeat this for each instance. Update system packages:
 sudo apt update && sudo apt upgrade -y
 ```
 
-### Step 3: Install Git and Clone the Project
-On the instance where you want to run Ansible:
-
-```bash
-sudo apt install git -y
-git clone https://github.com/yourusername/ezlearn-class.git
-cd ezlearn-class
-```
-
 ###  Step 4: Install Ansible (on Jenkins Slave only)
 
 Jenkins jobs will run on the slave node (agent), so Ansible must be installed on the Jenkins Slave where jobs are executed. Connect to your slave node and run:
 
 ```bash
+sudo apt install fontconfig openjdk-21-jre -y
 sudo apt install software-properties-common -y
 sudo add-apt-repository --yes --update ppa:ansible/ansible
 sudo apt install ansible -y
@@ -108,8 +100,23 @@ ansible --version
 
 ###  Phase 1: Jenkins and Slave (Run manually)
 
+Install Jenkins manually on the Jenkins Master EC2 instance:
+
+# Run these commands on Jenkins master node:
+
 ```bash
-ansible-playbook -i inventory/prod/hosts.ini playbooks/jenkins_install.yml
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update
+sudo apt-get install jenkins
+sudo apt update
+sudo apt install fontconfig openjdk-21-jre
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
 ```
 
 - This installs Jenkins on the master
@@ -148,6 +155,61 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
       Host: IP address of the slave node
 
       Credentials: Add credentials with username jenkins and private key from Jenkins master
+
+# Run the follow command on jenkins master to generate keys and authenticate master and slave node
+
+ ```bash
+sudo su - jenkins
+ssh-keygen -t rsa -b 4096 -C "jenkins@slave" -N "" -f ~/.ssh/id_rsa
+```
+
+This creates:
+
+~/.ssh/id_rsa → private key
+
+~/.ssh/id_rsa.pub → public key
+
+- Show the public key: run the following command
+
+```bash
+cat /var/lib/jenkins/.ssh/id_rsa.pub
+```
+
+# On Jenkins Slave (as ubuntu or root)
+Create the jenkins user if not already:
+
+```bash
+sudo useradd -m -s /bin/bash jenkins
+sudo mkdir -p /home/jenkins/.ssh
+sudo vim /home/jenkins/.ssh/authorized_keys
+```
+Paste the contents of the master's id_rsa.pub into that file.
+
+Set correct permissions:
+```bash
+sudo chown -R jenkins:jenkins /home/jenkins/.ssh
+sudo chmod 700 /home/jenkins/.ssh
+sudo chmod 600 /home/jenkins/.ssh/authorized_keys
+```
+
+# Test the SSH Connection
+
+Back on the Jenkins master as jenkins user:
+```bash
+ssh jenkins@<slave-ip>
+```
+
+# Next Update Jenkins Credential
+Go to Manage Jenkins → Credentials → (global) → your slave credential
+
+Click Add Credentials:
+
+Kind: SSH Username with private key
+
+Username: jenkins
+
+Private Key: Select “Enter directly” → paste contents of:
+cat /var/lib/jenkins/.ssh/id_rsa
 
  - Click Save
 
