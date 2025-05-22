@@ -1,8 +1,0 @@
----
-- name: Prepare Jenkins Slave Node
-  hosts: jenkins_slave
-  become: yes
-  roles:
-    - common     # installs Java, unzip, curl, git
-    - maven      # installs Maven
-    - jenkins_slave  # creates jenkins user, sets up SSH

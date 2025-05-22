@@ -1,31 +1,30 @@
 ---
-- name: Setup common tools on all servers
+- name: Install common tools (Java) on all servers
   hosts: all
+  become: yes
   roles:
     - common
-    - maven
 
-- name: Setup Jenkins Master
-  hosts: jenkins_master
-  roles:
-    - jenkins_master
-
-- name: Setup Jenkins Slave
+- name: Install Maven only on Jenkins Slave
   hosts: jenkins_slave
+  become: yes
   roles:
-    - jenkins_slave
+    - maven
 
 - name: Setup SonarQube
   hosts: sonarqube
+  become: yes
   roles:
     - sonarqube
 
 - name: Setup Nexus
   hosts: nexus
+  become: yes
   roles:
     - nexus
 
 - name: Setup Tomcat
   hosts: tomcat
+  become: yes
   roles:
     - tomcat

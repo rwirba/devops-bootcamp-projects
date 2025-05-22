@@ -1,12 +1,98 @@
 ---
-- name: Install Tomcat 9
+- name: Install Java
   ansible.builtin.apt:
-    name: tomcat9
+    name: default-jdk
     state: present
-    update_cache: yes
 
-- name: Start and enable Tomcat
-  ansible.builtin.service:
-    name: tomcat9
-    state: started
+- name: Create tomcat user and group
+  ansible.builtin.group:
+    name: tomcat
+
+- name: Add tomcat user
+  ansible.builtin.user:
+    name: tomcat
+    group: tomcat
+    shell: /bin/false
+    create_home: false
+
+- name: Download Tomcat
+  ansible.builtin.get_url:
+    url: "https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.1/bin/apache-tomcat-9.0.1.tar.gz"
+    dest: "/tmp/apache-tomcat-9.0.1.tar.gz"
+
+- name: Create /opt/tomcat
+  ansible.builtin.file:
+    path: /opt/tomcat
+    state: directory
+    owner: tomcat
+    group: tomcat
+
+- name: Extract Tomcat
+  ansible.builtin.unarchive:
+    src: /tmp/apache-tomcat-9.0.1.tar.gz
+    dest: /opt/tomcat
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+    owner: tomcat
+    group: tomcat
+
+- name: Set permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0755'
+    owner: tomcat
+    group: tomcat
+  loop:
+    - /opt/tomcat/bin
+    - /opt/tomcat/webapps
+    - /opt/tomcat/conf
+
+- name: Configure Tomcat Users
+  ansible.builtin.copy:
+    dest: /opt/tomcat/conf/tomcat-users.xml
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <tomcat-users>
+        <role rolename="manager-gui"/>
+        <role rolename="admin-gui"/>
+        <user username="admin" password="password" roles="manager-gui,admin-gui"/>
+      </tomcat-users>
+    owner: tomcat
+    group: tomcat
+    mode: '0640'
+
+- name: Create Tomcat systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tomcat.service
+    content: |
+      [Unit]
+      Description=Tomcat
+      After=network.target
+
+      [Service]
+      Type=forking
+      User=tomcat
+      Group=tomcat
+      Environment=CATALINA_HOME=/opt/tomcat
+      ExecStart=/opt/tomcat/bin/startup.sh
+      ExecStop=/opt/tomcat/bin/shutdown.sh
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Restart Tomcat
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable Tomcat
+  ansible.builtin.systemd:
+    name: tomcat
     enabled: yes
+
+# Handlers
+- name: Restart Tomcat
+  ansible.builtin.systemd:
+    name: tomcat
+    state: restarted

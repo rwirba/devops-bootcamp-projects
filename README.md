@@ -59,6 +59,14 @@ You will need **5 Ubuntu 22.04 EC2 instances**:
 - 1 for Nexus
 - 1 for Tomcat
 
+** Your EC2 instances should have tags like
+
+Name = jenkins-slave
+Name = sonarqube
+Name = nexus
+Name = tomcat
+
+
 #### Security Group Configuration:
 Allow the following ports on **all servers**:
 - Port 22: SSH
@@ -82,7 +90,7 @@ Repeat this for each instance. Update system packages:
 sudo apt update && sudo apt upgrade -y
 ```
 
-###  Step 4: Install Ansible (on Jenkins Slave only)
+###  Step 4: Install Ansible on Jenkins Slave only 
 
 Jenkins jobs will run on the slave node (agent), so Ansible must be installed on the Jenkins Slave where jobs are executed. Connect to your slave node and run:
 
@@ -95,7 +103,108 @@ ansible --version
 ```
 
 ---
+# We will not be hard codeing any values in playbook so we need dynamic inventory
 
+Create IAM User for Ansible Dynamic Inventory
+
+Step 1: Login to AWS Console
+Go to https://console.aws.amazon.com/iam
+
+On the left sidebar, click Users → Add users
+
+🔹 Step 2: Create IAM User
+User name: jenkins-ec2-access
+
+Access type: ✅ Programmatic access (check this)
+
+Click Next: Permissions
+
+🔹 Step 3: Attach Permissions
+Select:
+✅ Attach existing policies directly
+
+Search and attach:
+
+AmazonEC2ReadOnlyAccess
+
+Click Next → Next → Create user
+
+🔹 Step 4: Save Credentials
+Once created, copy and save:
+
+Access Key ID
+
+Secret Access Key
+
+You'll use these in Jenkins.
+
+✅ PART 2: Store AWS Credentials in Jenkins (Securely)
+🔹 Step 1: Install Plugins (if not installed)
+From Jenkins Dashboard:
+
+Go to Manage Jenkins → Plugins
+
+Install:
+
+Credentials Plugin
+
+Credentials Binding Plugin
+
+🔹 Step 2: Add AWS Credentials to Jenkins
+Go to Manage Jenkins → Credentials → (Global)
+
+Click Add Credentials
+
+Fill the form like this:
+
+Kind:  → select “AWS Credentials”
+
+ID: jenkins-aws-creds
+
+Access Key ID: your_access_key_id
+
+Secret Access Key: your_secret_access_key
+
+
+Description: AWS creds for Ansible EC2 dynamic inventory
+
+Click Create
+
+✅ PART 3: Inject These Credentials in Your Jenkins Job
+🔹 Option 1: Freestyle Job (Using Credentials Binding)
+Create or open your Jenkins Freestyle project
+
+Click on configure
+
+Go to Build Environment
+
+✅ Check “Use secret text(s) or file(s)”
+
+Click Add:
+
+Bindings → “Username and Password (separated)”
+
+Select the credential you created (aws-ec2-credentials)
+
+Set:
+
+Username Variable: AWS_ACCESS_KEY_ID
+
+Password Variable: AWS_SECRET_ACCESS_KEY
+
+In Build → Execute shell, use:
+
+```bash
+
+export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+ansible-playbook -i inventory/aws_ec2.yml playbooks/site.yml
+```
+You can test inventory manually:
+```bash
+ansible-inventory -i inventory/aws_ec2.yml --list
+```
 ## Execution Steps (Automated with Ansible)
 
 ###  Phase 1: Jenkins and Slave (Run manually)
