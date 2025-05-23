@@ -12,7 +12,7 @@ pipeline {
       steps {
         git branch: 'project-1-cicd',
             url: 'https://github.com/rwirba/devops-bootcamp-projects.git',
-      }
+        }
     }
 
     stage('Install Required Packages') {
@@ -34,7 +34,7 @@ pipeline {
         '''
       }
     }
-
+  }
   post {
     success {
       echo '✅ Infrastructure provisioned and application deployed successfully.'
