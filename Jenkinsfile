@@ -11,7 +11,7 @@ pipeline {
     stage('Clone Repo') {
       steps {
         git branch: 'project-1-cicd',
-            url: 'https://github.com/rwirba/devops-bootcamp-projects.git',
+            url: 'https://github.com/rwirba/devops-bootcamp-projects.git'
         }
     }
 
