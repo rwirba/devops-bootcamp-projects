@@ -1,4 +1,10 @@
 ---
+- name: Install common base tools on all hosts
+  hosts: all
+  become: yes
+  roles:
+    - common
+
 - name: Install Maven only on Jenkins Slave
   hosts: jenkins_slave
   become: yes

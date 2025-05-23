@@ -1,0 +1,10 @@
+---
+- name: Ensure base system packages are installed
+  ansible.builtin.apt:
+    name:
+      - openjdk-11-jdk
+      - unzip
+      - curl
+      - software-properties-common
+    state: present
+    update_cache: yes
