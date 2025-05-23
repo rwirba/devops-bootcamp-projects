@@ -67,11 +67,12 @@ Name = nexus
 Name = tomcat
 
 
-#### Security Group Configuration:
+#### Create 4 Security Groups:
 Allow the following ports on **all servers**:
 - Port 22: SSH
 
-Allow the following **where needed**:
+
+Allow the following for the respective servers and open ports for them
 - Jenkins: 8080
 - SonarQube: 9000
 - Nexus: 8081
@@ -100,7 +101,43 @@ sudo apt install software-properties-common -y
 sudo add-apt-repository --yes --update ppa:ansible/ansible
 sudo apt install ansible -y
 ansible --version
+
 ```
+
+Give jenkins Passwordless Sudo (Best for CI/CD)
+On your Jenkins slave EC2 instance, Run the following command
+
+```bash
+sudo update-alternatives --config editor    # To always use vim for editing sudoers
+```
+
+You’ll see options like:
+
+There are 3 choices for the alternative editor (providing /usr/bin/editor).
+
+  Selection    Path                Priority   Status
+------------------------------------------------------------
+* 0            /bin/nano            40        auto mode
+  1            /usr/bin/vim.basic   30        manual mode
+  2            /usr/bin/vim.tiny    15        manual mode
+
+Press enter to keep the current choice[*], or type selection number: 3
+
+Enter the number for vim.basic or vim and press Enter.
+
+Then run:
+
+```bash
+sudo visudo
+```
+Add this line at the end:
+
+jenkins ALL=(ALL) NOPASSWD:ALL
+
+Save and exit
+
+This will enable sudo not to prompt for a password in Jenkins jobs.
+
 
 ---
 # We will not be hard codeing any values in playbook so we need dynamic inventory
@@ -171,8 +208,7 @@ Description: AWS creds for Ansible EC2 dynamic inventory
 Click Create
 
 ✅ PART 3: Inject These Credentials in Your Jenkins Job
-🔹 Option 1: Freestyle Job (Using Credentials Binding)
-Create or open your Jenkins Freestyle project
+
 
 Click on configure
 
@@ -342,17 +378,24 @@ From Jenkins UI:
   
   - Enter an item name: infrastructure-setup
   
-  - Select Freestyle project and click OK
+  - Select pipeline and click OK
   
-  - Scroll to Build Environment, tick "Use secret text(s) or file(s)" if needed
-  
-  - Scroll to Build → Click Add build step → Execute shell
+  - Scroll to Pipeline, Select Pipeline script from SCM
 
-Paste the command below:
-```bash
-ansible-playbook -i inventory/prod/hosts.ini playbooks/site.yml
-```
-- Click save 
+  - SCM = Select Git
+
+  - Repositories =  Copy your git repo and insert on Repository URL
+
+  - Next step Branches to Build
+
+  - Select Add Branch
+
+  - Change */master to */project-1-cicd
+
+  - Script Path = by dafault you'll see Jenkinsfile. Don't change it
+  
+  - Scroll down and click save
+
 - click Build Now
 
 This will install:

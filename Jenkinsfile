@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'builder' }
+  agent { label 'infra-build-node' }
 
   environment {
     // Injected using Credentials Binding plugin (Username with password)
@@ -12,7 +12,6 @@ pipeline {
       steps {
         git branch: 'project-1-cicd',
             url: 'https://github.com/rwirba/devops-bootcamp-projects.git',
-            credentialsId: 'github-pat' // Optional: only needed if your repo is private
       }
     }
 
@@ -31,21 +30,10 @@ pipeline {
         sh '''
           export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
           export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-          ansible-playbook -i inventory/aws_ec2.yml playbooks/site.yml
+          ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml
         '''
       }
     }
-
-    stage('Deploy Application') {
-      steps {
-        sh '''
-          export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-          export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-          ansible-playbook -i inventory/aws_ec2.yml playbooks/deploy.yml
-        '''
-      }
-    }
-  }
 
   post {
     success {
