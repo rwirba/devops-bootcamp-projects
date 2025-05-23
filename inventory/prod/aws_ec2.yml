@@ -6,6 +6,9 @@ filters:
 keyed_groups:
   - key: tags.Name
     prefix: ""
+    separator: ""
+    lowercase: true
+
 hostnames:
   - private-ip-address
 compose:
