@@ -5,9 +5,9 @@
     shell: /bin/false
     create_home: no
 
-- name: Download Nexus 3.68.0-01
+- name: Download Nexus 3.80.0-06
   ansible.builtin.get_url:
-    url: https://download.sonatype.com/nexus/3/nexus-3.68.0-01/nexus-3.68.0-01-unix.tar.gz
+    url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
     dest: /tmp/nexus.tar.gz
 
 - name: Extract Nexus
@@ -15,7 +15,13 @@
     src: /tmp/nexus.tar.gz
     dest: /opt
     remote_src: yes
-    creates: /opt/nexus-3.68.0-01
+    creates: /opt/nexus-3.80.0-06
+
+- name: Create nexus symlink
+  ansible.builtin.file:
+    src: /opt/nexus-3.80.0-06
+    dest: /opt/nexus
+    state: link
 
 
 - name: Set run_as_user
