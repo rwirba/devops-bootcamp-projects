@@ -23,6 +23,16 @@
     dest: /opt/nexus
     state: link
 
+- name: Create nexus.rc if not present
+  ansible.builtin.copy:
+    dest: /opt/nexus/bin/nexus.rc
+    content: |
+      run_as_user="nexus"
+    owner: nexus
+    group: nexus
+    mode: '0644'
+
+
 - name: Set run_as_user
   ansible.builtin.lineinfile:
     path: /opt/nexus/bin/nexus.rc
