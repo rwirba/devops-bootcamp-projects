@@ -22,7 +22,7 @@ pipeline {
           sh '''
             export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
             export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-            ansible-playbook -i inventory/aws_ec2.yml playbooks/site.yml
+            ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml
           '''
         }
       }
