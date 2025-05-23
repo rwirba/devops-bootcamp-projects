@@ -15,6 +15,7 @@
     src: /tmp/nexus.tar.gz
     dest: /opt/
     remote_src: yes
+    creates: /opt/nexus-3.68.0-01
 
 - name: Set run_as_user
   ansible.builtin.lineinfile:
