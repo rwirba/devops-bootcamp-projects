@@ -30,6 +30,9 @@ pipeline {
   }
 
   post {
+    always {
+        cleanWs()
+    }
     success {
       echo 'Infrastructure provisioned successfully.'
     }
