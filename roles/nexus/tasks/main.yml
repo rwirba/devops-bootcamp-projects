@@ -7,7 +7,7 @@
 
 - name: Download Nexus
   ansible.builtin.get_url:
-    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    url: https://download.sonatype.com/nexus/3/nexus-3.68.0-01-unix.tar.gz
     dest: /tmp/nexus.tar.gz
 
 - name: Extract Nexus
