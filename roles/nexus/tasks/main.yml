@@ -59,13 +59,14 @@
       [Service]
       Type=forking
       LimitNOFILE=65536
-      ExecStart=/opt/nexus-3*/bin/nexus start
-      ExecStop=/opt/nexus-3*/bin/nexus stop
+      ExecStart=/opt/nexus/bin/nexus start
+      ExecStop=/opt/nexus/bin/nexus stop
       User=nexus
       Restart=on-abort
 
       [Install]
       WantedBy=multi-user.target
+
 
 - name: Reload systemd and start Nexus
   ansible.builtin.systemd:
