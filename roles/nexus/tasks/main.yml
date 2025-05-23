@@ -23,12 +23,12 @@
     dest: /opt/nexus
     state: link
 
-
 - name: Set run_as_user
   ansible.builtin.lineinfile:
-    path: /opt/nexus-3*/bin/nexus.rc
-    regexp: '^#?run_as_user=.*'
+    path: /opt/nexus/bin/nexus.rc
+    regexp: '^#?run_as_user='
     line: 'run_as_user="nexus"'
+
 
 - name: Change ownership of Nexus directories
   ansible.builtin.file:
