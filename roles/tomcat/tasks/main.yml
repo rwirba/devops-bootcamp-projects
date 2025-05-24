@@ -1,26 +1,27 @@
 ---
-- name: Install Java
+- name: Install Java 17
   ansible.builtin.apt:
-    name: default-jdk
+    name: openjdk-17-jdk
     state: present
+    update_cache: yes
 
-- name: Create tomcat user and group
+- name: Create tomcat group
   ansible.builtin.group:
     name: tomcat
 
-- name: Add tomcat user
+- name: Create tomcat user
   ansible.builtin.user:
     name: tomcat
     group: tomcat
     shell: /bin/false
     create_home: false
 
-- name: Download Tomcat
+- name: Download Tomcat 9.0.82
   ansible.builtin.get_url:
-    url: "https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.1/bin/apache-tomcat-9.0.1.tar.gz"
-    dest: "/tmp/apache-tomcat-9.0.1.tar.gz"
+    url: https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.82/bin/apache-tomcat-9.0.82.tar.gz
+    dest: /tmp/tomcat.tar.gz
 
-- name: Create /opt/tomcat
+- name: Create Tomcat install directory
   ansible.builtin.file:
     path: /opt/tomcat
     state: directory
@@ -29,25 +30,27 @@
 
 - name: Extract Tomcat
   ansible.builtin.unarchive:
-    src: /tmp/apache-tomcat-9.0.1.tar.gz
+    src: /tmp/tomcat.tar.gz
     dest: /opt/tomcat
     remote_src: yes
     extra_opts: [--strip-components=1]
     owner: tomcat
     group: tomcat
 
-- name: Set permissions
+- name: Set permissions on key Tomcat folders
   ansible.builtin.file:
     path: "{{ item }}"
-    mode: '0755'
+    state: directory
     owner: tomcat
     group: tomcat
+    recurse: yes
   loop:
     - /opt/tomcat/bin
     - /opt/tomcat/webapps
     - /opt/tomcat/conf
+    - /opt/tomcat/logs
 
-- name: Configure Tomcat Users
+- name: Configure tomcat-users.xml
   ansible.builtin.copy:
     dest: /opt/tomcat/conf/tomcat-users.xml
     content: |
@@ -55,7 +58,7 @@
       <tomcat-users>
         <role rolename="manager-gui"/>
         <role rolename="admin-gui"/>
-        <user username="admin" password="password" roles="manager-gui,admin-gui"/>
+        <user username="admin" password="admin123" roles="manager-gui,admin-gui"/>
       </tomcat-users>
     owner: tomcat
     group: tomcat
@@ -66,17 +69,20 @@
     dest: /etc/systemd/system/tomcat.service
     content: |
       [Unit]
-      Description=Tomcat
+      Description=Apache Tomcat Web Application Container
       After=network.target
 
       [Service]
       Type=forking
-      User=tomcat
-      Group=tomcat
+      Environment=JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      Environment=CATALINA_PID=/opt/tomcat/temp/tomcat.pid
       Environment=CATALINA_HOME=/opt/tomcat
+      Environment=CATALINA_BASE=/opt/tomcat
       ExecStart=/opt/tomcat/bin/startup.sh
       ExecStop=/opt/tomcat/bin/shutdown.sh
-      Restart=on-failure
+      User=tomcat
+      Group=tomcat
+      Restart=always
 
       [Install]
       WantedBy=multi-user.target
@@ -86,13 +92,7 @@
   ansible.builtin.systemd:
     daemon_reload: yes
 
-- name: Enable Tomcat
+- name: Enable Tomcat service
   ansible.builtin.systemd:
     name: tomcat
     enabled: yes
-
-# Handlers
-- name: Restart Tomcat
-  ansible.builtin.systemd:
-    name: tomcat
-    state: restarted
