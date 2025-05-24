@@ -71,11 +71,13 @@
       ExecStart=/opt/nexus/bin/nexus start
       ExecStop=/opt/nexus/bin/nexus stop
       User=nexus
-      Restart=on-abort
+      Restart=on-failure
+      TimeoutStartSec=300
       PIDFile=/opt/nexus/nexus.pid
 
       [Install]
       WantedBy=multi-user.target
+
 
 - name: Reload systemd and enable/start nexus
   ansible.builtin.systemd:
