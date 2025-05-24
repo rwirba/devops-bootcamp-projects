@@ -96,3 +96,8 @@
   ansible.builtin.systemd:
     name: tomcat
     enabled: yes
+
+- name: Restart Tomcat
+  ansible.builtin.systemd:
+    name: tomcat
+    state: restarted    

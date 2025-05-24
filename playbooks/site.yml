@@ -24,7 +24,7 @@
     - nexus
 
 - name: Setup Tomcat
-  hosts: ezlearnappprod
+  hosts: tomcat
   become: yes
   roles:
     - tomcat
