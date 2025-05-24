@@ -79,9 +79,16 @@
       WantedBy=multi-user.target
 
 
-- name: Reload systemd and enable/start nexus
+- name: Reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: yes
+
+- name: Enable Nexus service
+  ansible.builtin.systemd:
     name: nexus
     enabled: yes
-    state: restarted
+
+- name: Start Nexus service
+  ansible.builtin.systemd:
+    name: nexus
+    state: started
