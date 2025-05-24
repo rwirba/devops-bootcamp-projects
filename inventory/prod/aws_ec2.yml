@@ -7,7 +7,7 @@ keyed_groups:
   - key: tags.Name
     prefix: ""
     lowercase: true
-    separator: "_"
+    separator: ""
 hostnames:
   - private-ip-address
 compose:
