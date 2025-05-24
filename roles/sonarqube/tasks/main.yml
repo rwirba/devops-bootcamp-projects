@@ -5,9 +5,9 @@
     shell: /bin/false
     create_home: no
 
-- name: Download SonarQube
+- name: Download SonarQube 9.9.4 (LTS)
   ansible.builtin.get_url:
-    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.4.zip
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.4.87374.zip
     dest: /tmp/sonarqube.zip
 
 - name: Extract SonarQube
@@ -15,16 +15,17 @@
     src: /tmp/sonarqube.zip
     dest: /opt
     remote_src: yes
+    creates: /opt/sonarqube-9.9.4.87374
 
-- name: Create symlink /opt/sonarqube
+- name: Create symlink /opt/sonarqube → latest version
   ansible.builtin.file:
-    src: /opt/sonarqube-9.9.4
+    src: /opt/sonarqube-9.9.4.87374
     dest: /opt/sonarqube
     state: link
 
 - name: Set ownership of SonarQube files
   ansible.builtin.file:
-    path: /opt/sonarqube-9.9.4
+    path: /opt/sonarqube-9.9.4.87374
     state: directory
     recurse: yes
     owner: sonar
