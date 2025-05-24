@@ -1,4 +1,13 @@
 ---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - unzip
+      - fontconfig
+      - openjdk-17-jdk
+    state: present
+    update_cache: yes
+
 - name: Create sonar user
   ansible.builtin.user:
     name: sonar
@@ -13,15 +22,37 @@
 - name: Extract SonarQube
   ansible.builtin.unarchive:
     src: /tmp/sonarqube.zip
-    dest: /opt/
+    dest: /opt
     remote_src: yes
 
-- name: Set ownership for SonarQube
+- name: Create symlink /opt/sonarqube
+  ansible.builtin.file:
+    src: /opt/sonarqube-9.9.0.65466
+    dest: /opt/sonarqube
+    state: link
+
+- name: Set ownership of SonarQube files
   ansible.builtin.file:
     path: /opt/sonarqube-9.9.0.65466
+    state: directory
+    recurse: yes
     owner: sonar
     group: sonar
-    recurse: yes
+
+- name: Ensure vm.max_map_count is set for Elasticsearch
+  ansible.builtin.sysctl:
+    name: vm.max_map_count
+    value: '262144'
+    state: present
+    reload: yes
+
+- name: Create SonarQube logs directory (if missing)
+  ansible.builtin.file:
+    path: /opt/sonarqube/logs
+    state: directory
+    owner: sonar
+    group: sonar
+    mode: '0755'
 
 - name: Create SonarQube systemd service
   ansible.builtin.copy:
@@ -32,19 +63,24 @@
       After=network.target
 
       [Service]
-      Type=simple
+      Type=forking
+      ExecStart=/opt/sonarqube/bin/linux-x86-64/sonar.sh start
+      ExecStop=/opt/sonarqube/bin/linux-x86-64/sonar.sh stop
       User=sonar
       Group=sonar
-      ExecStart=/opt/sonarqube-9.9.0.65466/bin/linux-x86-64/sonar.sh start
-      ExecStop=/opt/sonarqube-9.9.0.65466/bin/linux-x86-64/sonar.sh stop
-      Restart=always
+      Restart=on-failure
+      LimitNOFILE=65536
+      Environment=JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
       [Install]
       WantedBy=multi-user.target
 
-- name: Reload systemd and enable SonarQube
+- name: Reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: yes
+
+- name: Enable and start SonarQube
+  ansible.builtin.systemd:
     name: sonarqube
-    state: started
     enabled: yes
+    state: restarted
