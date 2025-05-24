@@ -194,54 +194,20 @@ Click Add Credentials
 
 Fill the form like this:
 
-Kind:  → select “AWS Credentials”
+Kind:  → select “username and password”
 
-ID: jenkins-aws-creds
+ID: jenkins-ec2-access
 
-Access Key ID: your_access_key_id
+Username: your_access_key_id
 
-Secret Access Key: your_secret_access_key
+Password: your_secret_access_key
 
 
 Description: AWS creds for Ansible EC2 dynamic inventory
 
 Click Create
 
-✅ PART 3: Inject These Credentials in Your Jenkins Job
 
-
-Click on configure
-
-Go to Build Environment
-
-✅ Check “Use secret text(s) or file(s)”
-
-Click Add:
-
-Bindings → “Username and Password (separated)”
-
-Select the credential you created (aws-ec2-credentials)
-
-Set:
-
-Username Variable: AWS_ACCESS_KEY_ID
-
-Password Variable: AWS_SECRET_ACCESS_KEY
-
-In Build → Execute shell, use:
-
-```bash
-
-export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
-ansible-playbook -i inventory/aws_ec2.yml playbooks/site.yml
-```
-You can test inventory manually:
-```bash
-ansible-inventory -i inventory/aws_ec2.yml --list
-```
-## Execution Steps (Automated with Ansible)
 
 ###  Phase 1: Jenkins and Slave (Run manually)
 
@@ -287,13 +253,13 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
    - Go to Manage Jenkins → Manage Nodes → New Node
 
-   - Name: builder, click Permanent Agent, then click OK
+   - Name: infra-build-node, click Permanent Agent, then click OK
 
    - Fill in the form:
 
       Remote root directory: /home/jenkins
 
-      Labels: builder
+      Labels: infra-build-node
 
       Launch method: Launch agent via SSH
 
@@ -370,7 +336,7 @@ cat /var/lib/jenkins/.ssh/id_rsa
 
 From Jenkins UI:
 
-- Create a Freestyle or Pipeline job
+- Create  Pipeline job
 
 # How to Create a Jenkins Job:
 
