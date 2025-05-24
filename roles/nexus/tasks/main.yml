@@ -1,4 +1,10 @@
 ---
+- name: Install Java for Nexus
+  ansible.builtin.apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+
 - name: Create nexus user
   ansible.builtin.user:
     name: nexus
@@ -17,38 +23,47 @@
     remote_src: yes
     creates: /opt/nexus-3.80.0-06
 
-- name: Create nexus symlink
+- name: Create symlink /opt/nexus → /opt/nexus-3.80.0-06
   ansible.builtin.file:
     src: /opt/nexus-3.80.0-06
     dest: /opt/nexus
     state: link
 
-- name: Create nexus.rc if not present
-  ansible.builtin.copy:
-    dest: /opt/nexus/bin/nexus.rc
-    content: |
-      run_as_user="nexus"
+- name: Create Sonatype work directory
+  ansible.builtin.file:
+    path: /opt/sonatype-work/nexus3
+    state: directory
     owner: nexus
     group: nexus
-    mode: '0644'
+    mode: '0755'
+    recurse: yes
 
-
-- name: Set run_as_user
-  ansible.builtin.lineinfile:
-    path: /opt/nexus/bin/nexus.rc
-    regexp: '^#?run_as_user='
-    line: 'run_as_user="nexus"'
-
-
-- name: Change ownership of Nexus directories
+- name: Set ownership for nexus directory
   ansible.builtin.file:
-    path: /opt/nexus-3*
-    state: directory
+    path: /opt/nexus-3.80.0-06
     owner: nexus
     group: nexus
     recurse: yes
 
-- name: Create Nexus systemd service
+- name: Set nexus.vmoptions path to sonatype-work
+  ansible.builtin.lineinfile:
+    path: /opt/nexus/bin/nexus.vmoptions
+    regexp: '^.*-Dkaraf.data=.*$'
+    line: '-Dkaraf.data=/opt/sonatype-work/nexus3'
+    owner: nexus
+    group: nexus
+    mode: '0644'
+    create: yes
+
+- name: Create nexus.pid placeholder
+  ansible.builtin.file:
+    path: /opt/nexus/nexus.pid
+    state: touch
+    owner: nexus
+    group: nexus
+    mode: '0644'
+
+- name: Create nexus systemd service
   ansible.builtin.copy:
     dest: /etc/systemd/system/nexus.service
     content: |
@@ -63,14 +78,14 @@
       ExecStop=/opt/nexus/bin/nexus stop
       User=nexus
       Restart=on-abort
+      PIDFile=/opt/nexus/nexus.pid
 
       [Install]
       WantedBy=multi-user.target
 
-
-- name: Reload systemd and start Nexus
+- name: Reload systemd and enable/start nexus
   ansible.builtin.systemd:
     daemon_reload: yes
     name: nexus
     enabled: yes
-    state: started
+    state: restarted
