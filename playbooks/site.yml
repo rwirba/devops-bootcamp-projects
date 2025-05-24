@@ -24,7 +24,7 @@
     - nexus
 
 - name: Setup Tomcat
-  hosts: ezlearn-app-server
+  hosts: tomcat
   become: yes
   roles:
     - tomcat
