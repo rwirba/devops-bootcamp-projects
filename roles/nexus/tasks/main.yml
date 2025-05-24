@@ -1,10 +1,4 @@
 ---
-- name: Install Java for Nexus
-  ansible.builtin.apt:
-    name: openjdk-17-jdk
-    state: present
-    update_cache: yes
-
 - name: Create nexus user
   ansible.builtin.user:
     name: nexus

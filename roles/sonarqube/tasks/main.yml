@@ -1,13 +1,4 @@
 ---
-- name: Install dependencies
-  ansible.builtin.apt:
-    name:
-      - unzip
-      - fontconfig
-      - openjdk-17-jdk
-    state: present
-    update_cache: yes
-
 - name: Create sonar user
   ansible.builtin.user:
     name: sonar
