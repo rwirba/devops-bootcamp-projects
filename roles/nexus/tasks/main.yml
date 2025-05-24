@@ -88,7 +88,9 @@
     name: nexus
     enabled: yes
 
-- name: Start Nexus service
+- name: Start Nexus service asynchronously
   ansible.builtin.systemd:
     name: nexus
     state: started
+  async: 30
+  poll: 0
