@@ -117,6 +117,11 @@ ezlearn-class/
 
    ```bash
    sudo useradd -m -s /bin/bash jenkins
+   sudo mkdir -p /home/jenkins/.ssh
+   sudo cp /home/ubuntu/.ssh/authorized_keys /home/jenkins/.ssh/
+   sudo chown -R jenkins:jenkins /home/jenkins/.ssh
+   sudo chmod 700 /home/jenkins/.ssh
+   sudo chmod 600 /home/jenkins/.ssh/authorized_keys
    ```
 
 3. **Allow Jenkins Passwordless Sudo**
