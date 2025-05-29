@@ -1,0 +1,7 @@
+# roles/tomcat/handlers/main.yml
+
+- name: Restart Tomcat
+  ansible.builtin.systemd:
+    name: tomcat
+    state: restarted
+    enabled: yes
