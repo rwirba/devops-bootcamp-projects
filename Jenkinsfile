@@ -14,7 +14,7 @@ pipeline {
 
     stage('Provision Infrastructure') {
       steps {
-        sshagent(credentials: ['ec2-ssh-key']) {
+        sshagent(credentials: ['jenkins-ssh-key']) {
             withCredentials([usernamePassword(
                 credentialsId: 'jenkins-ec2-access',
                 usernameVariable: 'AWS_ACCESS_KEY_ID',
