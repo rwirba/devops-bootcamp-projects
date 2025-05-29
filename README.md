@@ -193,6 +193,7 @@ ezlearn-class/
      ```
 
    - Install suggested plugins and create admin user.
+   - Install ssh agent plugin
 
 ---
 
