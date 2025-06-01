@@ -56,7 +56,7 @@ ezlearn-class/
 ### Phase 1: Provision EC2 Infrastructure to install all required tools in target environments
 
 1. **Login to AWS Console**  
-   Go to https://console.aws.amazon.com and sign in.
+   Go to https://console.aws.amazon.com and sign in and create iam user and give console access.
 
 2. **Create a Key Pair**  
    - Go to EC2 → Key Pairs → Create Key Pair  
