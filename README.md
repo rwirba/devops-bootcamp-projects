@@ -113,15 +113,15 @@ ezlearn-class/
    sudo apt install ansible -y
    ```
 
-2. **Create Jenkins User**
+2. **Create Jenkins User on slave**
 
    ```bash
-   sudo useradd -m -s /bin/bash jenkins
    sudo mkdir -p /home/jenkins/.ssh
-   sudo cp /home/ubuntu/.ssh/authorized_keys /home/jenkins/.ssh/
+   sudo touch /home/jenkins/.ssh/authorized_keys
    sudo chown -R jenkins:jenkins /home/jenkins/.ssh
    sudo chmod 700 /home/jenkins/.ssh
    sudo chmod 600 /home/jenkins/.ssh/authorized_keys
+   echo "jenkins ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/jenkins
    ```
 
 3. **Allow Jenkins Passwordless Sudo**
@@ -202,7 +202,7 @@ ezlearn-class/
 1. **Generate SSH Keys on Jenkins Master**
 
    ```bash
-   sudo -u jenkins ssh-keygen -t rsa
+   sudo -u jenkins ssh-keygen -t ed25519 -f /var/lib/jenkins/.ssh/id_ed25519 -N ""
    ```
 
 2. **Add Key to Slave’s `jenkins` User**
