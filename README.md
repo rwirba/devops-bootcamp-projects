@@ -137,16 +137,6 @@ ezlearn-class/
    - Attach policy: `AmazonEC2ReadOnlyAccess`  
    - Create and **download Access Key ID and Secret**
 
-2. **Store Credentials in Jenkins**
-
-   - Install **Credentials** and **Credentials Binding** plugins  
-   - Go to: Jenkins → Manage → Credentials → Global → Add Credentials  
-   - Kind: `Username with password`  
-   - ID: `jenkins-ec2-access`  
-   - Username: AWS Access Key  
-   - Password: AWS Secret Key
-
----
 
 ### Phase 4: Install Jenkins on Master  Jenkins will drive all automation
 
@@ -228,6 +218,15 @@ Run the following command on jenkins master, this will automatically copy keys o
    - Copy entire key and go back to jenkins UI and paste key
    - Host Key Verification Strategy -> Select Non verifying Verification Strategy
    - click save
+  
+   **Store Credentials in Jenkins**
+
+   - Install **Credentials** and **Credentials Binding** plugins  
+   - Go to: Jenkins → Manage → Credentials → Global → Add Credentials  
+   - Kind: `Username with password`  
+   - ID: `jenkins-ec2-access`  
+   - Username: AWS Access Key  
+   - Password: AWS Secret Key
 
 ---
 
