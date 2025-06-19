@@ -117,8 +117,6 @@ ezlearn-class/
 
    ```bash
    sudo adduser --disabled-password --gecos "" jenkins
-   sudo mkdir -p /home/jenkins/.ssh
-   sudo touch /home/jenkins/.ssh/authorized_keys
    sudo chown -R jenkins:jenkins /home/jenkins
    sudo chmod 700 /home/jenkins/.ssh
    sudo chmod 600 /home/jenkins/.ssh/authorized_keys
