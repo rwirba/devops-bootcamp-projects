@@ -116,27 +116,16 @@ ezlearn-class/
 2. **Create Jenkins User on slave**
 
    ```bash
+   sudo adduser --disabled-password --gecos "" jenkins
    sudo mkdir -p /home/jenkins/.ssh
    sudo touch /home/jenkins/.ssh/authorized_keys
-   sudo chown -R jenkins:jenkins /home/jenkins/.ssh
+   sudo chown -R jenkins:jenkins /home/jenkins
    sudo chmod 700 /home/jenkins/.ssh
    sudo chmod 600 /home/jenkins/.ssh/authorized_keys
    echo "jenkins ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/jenkins
    ```
 
-3. **Allow Jenkins Passwordless Sudo**
 
-   ```bash
-   sudo visudo
-   ```
-
-   Add this line at the end:
-
-   ```
-   jenkins ALL=(ALL) NOPASSWD:ALL
-   ```
-
----
 
 ### Phase 3: Setup Ansible Dynamic Inventory so Ansible can discover EC2 servers automatically
 
@@ -202,14 +191,23 @@ ezlearn-class/
 1. **Generate SSH Keys on Jenkins Master**
 
    ```bash
-   sudo -u jenkins ssh-keygen -t ed25519 -f /var/lib/jenkins/.ssh/id_ed25519 -N ""
+   ssh-keygen 
    ```
-
+   Hit enter key 4 times when prompted
+   ```bash
+   sudo cat .ssh/id_ed25519.pub
+   ```
+   Copy the entire code i.e ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGt2A4ed ubuntu@<ip>
 2. **Add Key to Slave’s `jenkins` User**
 
    ```bash
-   ssh-copy-id -i /var/lib/jenkins/.ssh/id_rsa.pub jenkins@<slave-ip>
+   sudo su - jenkins
+   cd .ssh
+   vim authorized_keys
    ```
+   
+   Paste the entire code i.e ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGt2A4ed ubuntu@<ip>
+   save file i.e :wq
 
 3. **Add Jenkins Node in UI**
 
