@@ -182,7 +182,7 @@ ezlearn-class/
      ```
 
    - Install suggested plugins and create admin user.
-   - Install ssh agent plugin
+   - Install ssh agent plugin.  Click on manage Jenkins -> Plugins -> Available Plugins -> search ssh agent - Check bok and click Install
 
 ---
 
@@ -191,31 +191,43 @@ ezlearn-class/
 1. **Generate SSH Keys on Jenkins Master**
 
    ```bash
-   ssh-keygen 
-   ```
-   Hit enter key 4 times when prompted
-   ```bash
-   sudo cat .ssh/id_ed25519.pub
-   ```
-   Copy the entire code i.e ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGt2A4ed ubuntu@<ip>
-2. **Add Key to Slave’s `jenkins` User**
+   # 1. Create .ssh directory
+   sudo -u jenkins mkdir -p /var/lib/jenkins/.ssh
 
-   ```bash
-   sudo su - jenkins
-   cd .ssh
-   vim authorized_keys
+   # 2. Generate key pair (will create id_rsa and id_rsa.pub)
+   sudo -u jenkins ssh-keygen -t rsa -b 4096 -f /var/lib/jenkins/.ssh/id_rsa -N ""
+
+   # 3. Set proper permissions
+   sudo chmod 700 /var/lib/jenkins/.ssh
+   sudo chmod 600 /var/lib/jenkins/.ssh/id_rsa
+   sudo chmod 644 /var/lib/jenkins/.ssh/id_rsa.pub
+
+# 4. Verify files exist
    ```
-   
-   Paste the entire code i.e ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGt2A4ed ubuntu@<ip>
-   save file i.e :wq
+   sudo -u jenkins ls -la /var/lib/jenkins/.ssh/
+   ```
+2. **Add Key to Slave’s `jenkins` User**
+Run the following command on jenkins master, this will automatically copy keys over to slave node
+   ```bash
+   sudo -u jenkins cat /var/lib/jenkins/.ssh/id_rsa.pub | ssh jenkins@<slave-ip> "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+   ```
 
 3. **Add Jenkins Node in UI**
 
-   - Jenkins → Manage Nodes → New Node  
-   - Name: `infra-build-node`  
-   - Launch via SSH  
-   - Remote root: `/home/jenkins`  
-   - Credentials: Add SSH key from `/var/lib/jenkins/.ssh/id_rsa`
+   - Click Manage Jenkins → Nodes → New Node  
+   - Name: `infra-build-node`  Select Permanent Agent then click Create 
+   - Remote root: `/home/jenkins`
+   - Launch Method click dropdown and select Launch via SSH
+   - Host insert private ip of slave
+   - Credentials: click Add and select Jenkins
+   - Kind: Select SSH Username with private key
+   - ID: Jenkins-ssh-key
+   - Username: jenkins
+   - Private Key = select Enter directly and click Add
+   - Copy private SSH key from Jenkins master with the command `sudo cat /var/lib/jenkins/.ssh/id_rsa`
+   - Copy entire key and go back to jenkins UI and paste key
+   - Host Key Verification Strategy -> Select Non verifying Verification Strategy
+   - click save
 
 ---
 
