@@ -116,7 +116,12 @@ ezlearn-class/
 2. **Create Jenkins User on slave**
 
    ```bash
-   sudo adduser --disabled-password --gecos "" jenkins
+   sudo useradd -m -d /home/jenkins -s /bin/bash jenkins
+   sudo mkdir -p /home/jenkins/.ssh
+   sudo touch /home/jenkins/.ssh/authorized_keys
+   sudo chown -R jenkins:jenkins /home/jenkins/.ssh
+   sudo chmod 700 /home/jenkins/.ssh
+   sudo chmod 600 /home/jenkins/.ssh/authorized_keys
    echo "jenkins ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/jenkins
    ```
 
@@ -192,12 +197,19 @@ ezlearn-class/
    sudo -u jenkins ls -la /var/lib/jenkins/.ssh/
    ```
 2. **Add Key to Slave’s `jenkins` User**
-Run the following command on jenkins master, this will automatically copy keys over to slave node
+Run the following command on master and copy keys over to slave node
    ```bash
-   sudo -u jenkins cat /var/lib/jenkins/.ssh/id_rsa.pub | ssh jenkins@<slave-ip> "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+   sudo cat /var/lib/jenkins/.ssh/id_rsa.pub
    ```
+   Copy the key and go to slave node terminal and insert with the following commands
 
-3. **Add Jenkins Node in UI**
+   ```
+   sudo su - jenkins
+   vim .ssh/authorized_keys
+   ```
+   paste the copied keys and save file with :wq! hit enter key to save and exit
+
+4. **Add Jenkins Node in UI**
 
    - Click Manage Jenkins → Nodes → New Node  
    - Name: `infra-build-node`  Select Permanent Agent then click Create 
