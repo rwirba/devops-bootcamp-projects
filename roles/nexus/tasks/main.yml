@@ -35,15 +35,15 @@
         group: nexus
       tags: nexus_user
 
-    - name: Download Nexus 3.81.1
+    - name: Download Nexus 3.80.0
       get_url:
-        url: "https://download.sonatype.com/nexus/3/nexus-3.81.1-01-unix.tar.gz"
-        dest: "/tmp/nexus-3.81.1-01.tar.gz"
+        https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
+        dest: "/tmp/nexus-3.80.0-06.tar.gz"
       tags: nexus_download
 
     - name: Extract and install Nexus
       unarchive:
-        src: "/tmp/nexus-3.81.1-01.tar.gz"
+        src: "/tmp/nexus-3.80.0-06.tar.gz"
         dest: "/opt"
         remote_src: yes
         extra_opts: ["--strip-components=1"]
