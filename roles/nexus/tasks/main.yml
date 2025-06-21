@@ -62,7 +62,14 @@
         - "/opt/sonatype-work/nexus3"
         - "/opt/nexus/etc"
       tags: nexus_dirs
-
+    - name: Ensure Nexus bin directory exists
+      ansible.builtin.file:
+        path: /opt/nexus/bin
+        state: directory
+        owner: nexus
+        group: nexus
+        mode: '0755'
+        
     - name: Configure JVM options
       template:
         src: nexus.vmoptions.j2
