@@ -1,4 +1,9 @@
 ---
+- name: Ensure nexus group exists
+  ansible.builtin.group:
+    name: nexus
+    state: present
+    
 - name: Create nexus user
   ansible.builtin.user:
     name: nexus
