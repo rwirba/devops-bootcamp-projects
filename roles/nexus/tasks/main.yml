@@ -23,8 +23,6 @@
   get_url:
     url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
     dest: /tmp/nexus.tar.gz
-    checksum: sha256:8e5f9fc6c926d3d3e7f492e9938f3a8d4f304d3a6a4b5e5e5e5e5e5e5e5e5e5e5
-    timeout: 300
 
 - name: Extract Nexus
   unarchive:
