@@ -45,6 +45,7 @@
     src: /opt/nexus-3.80.0-06
     dest: /opt/nexus
     state: link
+    force: yes
     owner: nexus
     group: nexus
 
