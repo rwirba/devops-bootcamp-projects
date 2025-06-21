@@ -1,29 +1,23 @@
 ---
-# Main playbook for infrastructure setup
-- name: Apply system prerequisites to all hosts
-  hosts: all
-  become: yes
-  tasks:
-    - name: Install base packages
-      apt:
-        name:
-          - openjdk-11-jdk
-          - lsof
-          - curl
-        state: present
-      tags: always
 
-    - name: Increase file descriptors system-wide
-      pam_limits:
-        domain: '*'
-        limit_type: '-'
-        limit_item: nofile
-        value: 65536
-      tags: limits
+- name: Install base packages
+  apt:
+    name:
+      - openjdk-11-jdk
+      - lsof
+      - curl
+    state: present
+  tags: always
+
+- name: Increase file descriptors system-wide
+  pam_limits:
+    domain: '*'
+    limit_type: '-'
+    limit_item: nofile
+    value: 65536
+  tags: limits
 
 - name: Install and configure Nexus
-  hosts: nexus_servers  # Defined in your inventory
-  become: yes
   vars:
     nexus_version: "3.80.0-06"
     nexus_install_dir: "/opt/nexus"
