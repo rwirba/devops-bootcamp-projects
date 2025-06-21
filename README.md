@@ -276,67 +276,126 @@ After successful execution:
 - Deploy custom WAR from Maven build to Tomcat
 - Add unit tests and reports to Jenkins
 
-**Generate Access Token:**
-Access http://<sonarqube-ip>:9000 (Default creds: admin/admin)
+## SonarQube Configuration
 
-Go to Profile → Security → Generate Token (e.g., jenkins-token)
+### Generate Access Token
+1. Access SonarQube dashboard:
+http://<sonarqube-server-ip>:9000
+- First-time password is in: `/opt/sonatype-work/nexus3/admin.password`
+- Change password when prompted
 
-Save the token securely in notepad
+### Create Maven Repositories
+1. Navigate to: ⚙️ Settings → Repositories → Create repository
+2. Create these repositories:
 
-**Nexus Repository Setup**
-Configure Repositories
-Access http://<nexus-ip>:8081 → Login with admin and the password from above.
+| Repository Name   | Type    | Version Policy | Blob Store |
+|-------------------|---------|----------------|------------|
+| `maven-releases`  | hosted  | Release        | default    |
+| `maven-snapshots` | hosted  | Snapshot       | default    |
+| `maven-public`    | group   | -              | default    |
 
-Change password when prompted.
+3. For the group repository (`maven-public`):
+- Add both `maven-releases` and `maven-snapshots` as members
 
-Create repositories:
+---
 
-maven-releases (Hosted, Policy: Release)
+## Jenkins Configuration
 
-maven-snapshots (Hosted, Policy: Snapshot)
+### Install Required Plugins
+1. Go to: Dashboard → Manage Jenkins → Plugins → Available
+2. Search and install:
+- SonarQube Scanner
+- Nexus Artifact Uploader
+- Deploy to container
 
-maven-public (Group, include both above)
+### Configure System Settings
+1. **SonarQube Server**:
+- Manage Jenkins → System → SonarQube servers
+- Add server:
+  - Name: `SonarQube`
+  - Server URL: `http://<sonarqube-ip>:9000`
+  - Server authentication token: [paste token from SonarQube]
 
-**Jenkins Configuration:**
-Install Plugins
-Go to Manage Jenkins → Plugins → Available Plugins:
+2. **Tool Configuration**:
+- Manage Jenkins → Tools
+- Add SonarQube Scanner installation
 
-SonarQube Scanner
+### Set Up Credentials
+1. **Nexus Credentials**:
+- Kind: Username with password
+- ID: `nexus-creds`
+- Username: `admin`
+- Password: [your Nexus admin password]
 
-Nexus Artifact Uploader
+2. **Tomcat Credentials**:
+- Kind: Username with password
+- ID: `tomcat-deployer`
+- Username: `deployer`
+- Password: `deploy123`
 
-Deploy to container
+---
 
-Configure Tools
-SonarQube Server:
+## Pipeline Integration
 
-Manage Jenkins → System → SonarQube servers
-
-Name: SonarQube
-
-URL: http://<sonarqube-ip>:9000
-
-Token: Paste the SonarQube token from Step 2.
-
-Nexus Credentials:
-
-Manage Jenkins → Credentials → System → Global Credentials
-
-Add Username with password:
-
-ID: nexus-creds
-
-Username: admin
-
-Password: <nexus-admin-password>
-
-Tomcat Credentials:
-
-Add another credential:
-
-ID: tomcat-deployer
-
-Username: deployer
-
-Password: deploy123
-
+### Sample Jenkinsfile
+```groovy
+pipeline {
+ agent any
+ environment {
+     SONAR_SCANNER = tool 'SonarQubeScanner'
+     NEXUS_URL = 'http://<nexus-ip>:8081'
+     TOMCAT_URL = 'http://<tomcat-ip>:8080/manager/text'
+ }
+ stages {
+     stage('Build & Test') {
+         steps {
+             sh 'mvn clean package'
+         }
+     }
+     stage('Code Quality Scan') {
+         steps {
+             withSonarQubeEnv('SonarQube') {
+                 sh """
+                     ${SONAR_SCANNER}/bin/sonar-scanner \
+                     -Dsonar.projectKey=myapp \
+                     -Dsonar.java.binasets=target/classes
+                 """
+             }
+         }
+     }
+     stage('Deploy to Nexus') {
+         steps {
+             withCredentials([usernamePassword(
+                 credentialsId: 'nexus-creds',
+                 usernameVariable: 'NEXUS_USER',
+                 passwordVariable: 'NEXUS_PASS'
+             )]) {
+                 sh '''
+                     mvn deploy:deploy-file \
+                     -Durl=${NEXUS_URL}/repository/maven-releases/ \
+                     -DrepositoryId=nexus \
+                     -Dfile=target/*.war \
+                     -DgroupId=com.myapp \
+                     -DartifactId=myapp \
+                     -Dversion=1.0
+                 '''
+             }
+         }
+     }
+     stage('Deploy to Tomcat') {
+         steps {
+             withCredentials([usernamePassword(
+                 credentialsId: 'tomcat-deployer',
+                 usernameVariable: 'TOMCAT_USER',
+                 passwordVariable: 'TOMCAT_PASS'
+             )]) {
+                 sh '''
+                     curl -u "${TOMCAT_USER}:${TOMCAT_PASS}" \
+                     -T target/*.war \
+                     "${TOMCAT_URL}/deploy?path=/myapp&update=true"
+                 '''
+             }
+         }
+     }
+ }
+}
