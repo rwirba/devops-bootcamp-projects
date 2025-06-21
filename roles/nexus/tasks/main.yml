@@ -19,7 +19,13 @@
 
 - name: Setup Nexus Repository
   block:
-    - name: Create nexus user and group
+    - name: Ensure nexus group exists
+      group:
+        name: nexus
+        state: present
+      tags: nexus_user
+      
+    - name: Create nexus user
       user:
         name: nexus
         shell: /bin/bash
