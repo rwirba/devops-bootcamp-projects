@@ -1,96 +1,85 @@
 ---
-- name: Create nexus user
-  ansible.builtin.user:
-    name: nexus
-    shell: /bin/false
-    create_home: no
+- name: Ensure system prerequisites
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-11-jdk
+          - lsof
+        state: present
 
-- name: Download Nexus 3.80.0-06
-  ansible.builtin.get_url:
-    url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
-    dest: /tmp/nexus.tar.gz
+    - name: Increase file descriptors limit
+      pam_limits:
+        domain: nexus
+        limit_type: '-'
+        limit_item: nofile
+        value: 65536
 
-- name: Extract Nexus
-  ansible.builtin.unarchive:
-    src: /tmp/nexus.tar.gz
-    dest: /opt
-    remote_src: yes
-    creates: /opt/nexus-3.80.0-06
+- name: Nexus installation
+  hosts: nexus_servers
+  become: yes
+  tasks:
+    - name: Create nexus user with proper shell
+      user:
+        name: nexus
+        shell: /bin/bash
+        home: /opt/nexus
+        system: yes
+        create_home: yes
 
-- name: Create symlink /opt/nexus → /opt/nexus-3.80.0-06
-  ansible.builtin.file:
-    src: /opt/nexus-3.80.0-06
-    dest: /opt/nexus
-    state: link
+    - name: Download Nexus
+      get_url:
+        url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
+        dest: /tmp/nexus.tar.gz
+        checksum: sha256:8e5f9fc6c926d3d3e7f492e9938f3a8d4f304d3a6a4b5e5e5e5e5e5e5e5e5e5e5
 
-- name: Create Sonatype work directory
-  ansible.builtin.file:
-    path: /opt/sonatype-work/nexus3
-    state: directory
-    owner: nexus
-    group: nexus
-    mode: '0755'
-    recurse: yes
+    - name: Extract Nexus
+      unarchive:
+        src: /tmp/nexus.tar.gz
+        dest: /opt
+        remote_src: yes
+        extra_opts: ["--strip-components=1"]
+        owner: nexus
+        group: nexus
 
-- name: Set ownership for nexus directory
-  ansible.builtin.file:
-    path: /opt/nexus-3.80.0-06
-    owner: nexus
-    group: nexus
-    recurse: yes
+    - name: Create sonatype-work directory
+      file:
+        path: /opt/sonatype-work/nexus3
+        state: directory
+        owner: nexus
+        group: nexus
+        mode: '0755'
 
-- name: Set nexus.vmoptions path to sonatype-work
-  ansible.builtin.lineinfile:
-    path: /opt/nexus/bin/nexus.vmoptions
-    regexp: '^.*-Dkaraf.data=.*$'
-    line: '-Dkaraf.data=/opt/sonatype-work/nexus3'
-    owner: nexus
-    group: nexus
-    mode: '0644'
-    create: yes
+    - name: Configure nexus.vmoptions
+      blockinfile:
+        path: /opt/nexus/bin/nexus.vmoptions
+        block: |
+          -Xms2g
+          -Xmx2g
+          -XX:MaxDirectMemorySize=2g
+          -Dkaraf.data=/opt/sonatype-work/nexus3
+        owner: nexus
+        group: nexus
+        mode: '0644'
 
-- name: Create nexus.pid placeholder
-  ansible.builtin.file:
-    path: /opt/nexus/nexus.pid
-    state: touch
-    owner: nexus
-    group: nexus
-    mode: '0644'
+    - name: Create systemd service with proper settings
+      template:
+        src: templates/nexus.service.j2
+        dest: /etc/systemd/system/nexus.service
+        mode: '0644'
+      vars:
+        nexus_user: nexus
+        nexus_pid_file: /opt/nexus/nexus.pid
+        java_home: /usr/lib/jvm/java-11-openjdk-amd64
 
-- name: Create nexus systemd service
-  ansible.builtin.copy:
-    dest: /etc/systemd/system/nexus.service
-    content: |
-      [Unit]
-      Description=Nexus service
-      After=network.target
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
 
-      [Service]
-      Type=forking
-      LimitNOFILE=65536
-      ExecStart=/opt/nexus/bin/nexus start
-      ExecStop=/opt/nexus/bin/nexus stop
-      User=nexus
-      Restart=on-failure
-      TimeoutStartSec=300
-      PIDFile=/opt/nexus/nexus.pid
-
-      [Install]
-      WantedBy=multi-user.target
-
-
-- name: Reload systemd daemon
-  ansible.builtin.systemd:
-    daemon_reload: yes
-
-- name: Enable Nexus service
-  ansible.builtin.systemd:
-    name: nexus
-    enabled: yes
-
-- name: Start Nexus service asynchronously
-  ansible.builtin.systemd:
-    name: nexus
-    state: started
-  async: 30
-  poll: 0
+    - name: Enable and start Nexus
+      systemd:
+        name: nexus
+        state: started
+        enabled: yes
