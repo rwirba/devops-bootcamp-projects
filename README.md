@@ -276,5 +276,67 @@ After successful execution:
 - Deploy custom WAR from Maven build to Tomcat
 - Add unit tests and reports to Jenkins
 
+**Generate Access Token**
+Access http://<sonarqube-ip>:9000 (Default creds: admin/admin)
 
+Go to Profile → Security → Generate Token (e.g., jenkins-token)
+
+Save the token securely in notepad
+
+**Nexus Repository Setup**
+Configure Repositories
+Access http://<nexus-ip>:8081 → Login with admin and the password from above.
+
+Change password when prompted.
+
+Create repositories:
+
+maven-releases (Hosted, Policy: Release)
+
+maven-snapshots (Hosted, Policy: Snapshot)
+
+maven-public (Group, include both above)
+
+**Jenkins Configuration**
+Install Plugins
+Go to Manage Jenkins → Plugins → Available Plugins:
+
+SonarQube Scanner
+
+Nexus Artifact Uploader
+
+Deploy to container
+
+Configure Tools
+SonarQube Server:
+
+Manage Jenkins → System → SonarQube servers
+
+Name: SonarQube
+
+URL: http://<sonarqube-ip>:9000
+
+Token: Paste the SonarQube token from Step 2.
+
+Nexus Credentials:
+
+Manage Jenkins → Credentials → System → Global Credentials
+
+Add Username with password:
+
+ID: nexus-creds
+
+Username: admin
+
+Password: <nexus-admin-password>
+
+Tomcat Credentials:
+
+Add another credential:
+
+ID: tomcat-deployer
+
+Username: deployer
+
+Password: deploy123
 
