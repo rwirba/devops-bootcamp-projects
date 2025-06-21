@@ -276,7 +276,7 @@ After successful execution:
 - Deploy custom WAR from Maven build to Tomcat
 - Add unit tests and reports to Jenkins
 
-**Generate Access Token**
+**Generate Access Token:**
 Access http://<sonarqube-ip>:9000 (Default creds: admin/admin)
 
 Go to Profile → Security → Generate Token (e.g., jenkins-token)
@@ -297,7 +297,7 @@ maven-snapshots (Hosted, Policy: Snapshot)
 
 maven-public (Group, include both above)
 
-**Jenkins Configuration**
+**Jenkins Configuration:**
 Install Plugins
 Go to Manage Jenkins → Plugins → Available Plugins:
 
