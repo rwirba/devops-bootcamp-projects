@@ -65,7 +65,7 @@
 
     - name: Configure JVM options
       template:
-        src: templates/nexus.vmoptions.j2
+        src: nexus.vmoptions.j2
         dest: "/opt/nexus/bin/nexus.vmoptions"
         owner: nexus
         group: nexus
@@ -74,6 +74,7 @@
         java_xms: "2g"
         java_xmx: "2g"
         max_direct_memory: "2g"
+        nexus_data_dir: "/opt/sonatype-work/nexus3"
       tags: nexus_config
 
     - name: Deploy systemd service
