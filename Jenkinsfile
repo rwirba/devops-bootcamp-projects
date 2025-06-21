@@ -1,6 +1,10 @@
 pipeline {
   agent { label 'infra-build-node' }
 
+  environment {
+    AWS_DEFAULT_REGION = 'us-east-1'  
+  }
+
   stages {
     stage('Install Required Packages') {
       steps {
