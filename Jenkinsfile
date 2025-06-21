@@ -19,7 +19,7 @@ pipeline {
 
     stage('Provision Infrastructure') {
       steps {
-        sshagent(credentials: ['jenkins-ssh-key']) {
+        sshagent(credentials: ['ssh-agent-key']) {
           withCredentials([
             usernamePassword(
               credentialsId: 'jenkins-ec2-access',
