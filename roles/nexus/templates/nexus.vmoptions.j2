@@ -1,0 +1,4 @@
+-Xms{{ java_xms | default('2g') }}
+-Xmx{{ java_xmx | default('2g') }}
+-XX:MaxDirectMemorySize={{ max_direct_memory | default('2g') }}
+-Dkaraf.data={{ nexus_data_dir | default('/opt/sonatype-work/nexus3') }}
