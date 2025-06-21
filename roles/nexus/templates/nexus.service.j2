@@ -1,17 +1,19 @@
 [Unit]
-Description=Nexus Repository Manager 3.80.0
+Description=Nexus Repository Manager
 After=network.target
 
 [Service]
 Type=forking
 LimitNOFILE=65536
-User={{ nexus_user | default('nexus') }}
-Group={{ nexus_group | default('nexus') }}
-ExecStart={{ nexus_home | default('/opt/nexus') }}/bin/nexus start
-ExecStop={{ nexus_home | default('/opt/nexus') }}/bin/nexus stop
+User={{ nexus_user }}
+Group={{ nexus_user }}
+Environment="JAVA_HOME={{ java_home }}"
+ExecStart={{ nexus_install_dir }}/bin/nexus start
+ExecStop={{ nexus_install_dir }}/bin/nexus stop
+PIDFile={{ nexus_pid_file }}
 Restart=on-failure
 RestartSec=30
-Environment={{ nexus_environment_vars | default('') }}
+TimeoutStartSec=300
 
 [Install]
 WantedBy=multi-user.target
