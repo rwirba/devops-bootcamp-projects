@@ -265,8 +265,8 @@ After successful execution:
 - Jenkins is set up with a connected slave
 - SonarQube is accessible for code analysis
 - Nexus is hosting artifacts
-- WAR files are deployed to Tomcat
-- Jenkins pipelines automate the full lifecycle from build to deployment
+
+
 
 ---
 
@@ -274,5 +274,7 @@ After successful execution:
 
 - Add SonarQube analysis in your Jenkinsfile
 - Deploy custom WAR from Maven build to Tomcat
-- Schedule regular builds with polling
 - Add unit tests and reports to Jenkins
+
+
+
