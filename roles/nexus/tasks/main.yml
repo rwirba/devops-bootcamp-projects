@@ -1,130 +1,96 @@
 ---
-
-- name: Install Java
-  apt:
-    name: openjdk-11-jdk
-    state: present
-
-- name: Create nexus group
-  group:
-    name: nexus
-    state: present
-
 - name: Create nexus user
-  user:
+  ansible.builtin.user:
     name: nexus
-    shell: /bin/bash
-    group: nexus
-    system: yes
+    shell: /bin/false
     create_home: no
 
-# 2. Nexus Installation
-- name: Download Nexus
-  get_url:
+- name: Download Nexus 3.80.0-06
+  ansible.builtin.get_url:
     url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
     dest: /tmp/nexus.tar.gz
 
 - name: Extract Nexus
-  unarchive:
+  ansible.builtin.unarchive:
     src: /tmp/nexus.tar.gz
     dest: /opt
     remote_src: yes
-    extra_opts: ["--strip-components=1"]
-    owner: nexus
-    group: nexus
+    creates: /opt/nexus-3.80.0-06
 
-# 3. Filesystem Configuration
-- name: Remove existing /opt/nexus if present
-  file:
-    path: /opt/nexus
-    state: absent
-  ignore_errors: yes
-
-- name: Create version symlink
-  file:
+- name: Create symlink /opt/nexus → /opt/nexus-3.80.0-06
+  ansible.builtin.file:
     src: /opt/nexus-3.80.0-06
     dest: /opt/nexus
     state: link
-    force: yes
-    owner: nexus
-    group: nexus
 
-- name: Create required directories
-  file:
-    path: "{{ item }}"
+- name: Create Sonatype work directory
+  ansible.builtin.file:
+    path: /opt/sonatype-work/nexus3
     state: directory
     owner: nexus
     group: nexus
     mode: '0755'
-  loop:
-    - /opt/sonatype-work/nexus3
-    - /opt/sonatype-work/nexus3/tmp
-    - /opt/nexus/logs
+    recurse: yes
 
-# 4. Configuration
-- name: Configure JVM options
-  blockinfile:
+- name: Set ownership for nexus directory
+  ansible.builtin.file:
+    path: /opt/nexus-3.80.0-06
+    owner: nexus
+    group: nexus
+    recurse: yes
+
+- name: Set nexus.vmoptions path to sonatype-work
+  ansible.builtin.lineinfile:
     path: /opt/nexus/bin/nexus.vmoptions
-    block: |
-      -Xms1g
-      -Xmx1g
-      -XX:MaxDirectMemorySize=1g
-      -Dkaraf.data=/opt/sonatype-work/nexus3
-      -Djava.io.tmpdir=/opt/sonatype-work/nexus3/tmp
+    regexp: '^.*-Dkaraf.data=.*$'
+    line: '-Dkaraf.data=/opt/sonatype-work/nexus3'
     owner: nexus
     group: nexus
     mode: '0644'
     create: yes
 
-# 5. Service Setup
-- name: Deploy systemd service
-  copy:
+- name: Create nexus.pid placeholder
+  ansible.builtin.file:
+    path: /opt/nexus/nexus.pid
+    state: touch
+    owner: nexus
+    group: nexus
+    mode: '0644'
+
+- name: Create nexus systemd service
+  ansible.builtin.copy:
     dest: /etc/systemd/system/nexus.service
     content: |
       [Unit]
-      Description=Nexus Repository Manager
+      Description=Nexus service
       After=network.target
-      
+
       [Service]
       Type=forking
       LimitNOFILE=65536
       ExecStart=/opt/nexus/bin/nexus start
       ExecStop=/opt/nexus/bin/nexus stop
       User=nexus
-      Group=nexus
       Restart=on-failure
-      RestartSec=30
       TimeoutStartSec=300
       PIDFile=/opt/nexus/nexus.pid
-      Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
-      WorkingDirectory=/opt/nexus
-      
+
       [Install]
       WantedBy=multi-user.target
-    mode: '0644'
 
-# 6. Service Management
-- name: Reload systemd
-  systemd:
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
     daemon_reload: yes
 
-- name: Start Nexus service with retry
-  systemd:
+- name: Enable Nexus service
+  ansible.builtin.systemd:
+    name: nexus
+    enabled: yes
+
+- name: Start Nexus service asynchronously
+  ansible.builtin.systemd:
     name: nexus
     state: started
-    enabled: yes
-  register: start_result
-  until: start_result is succeeded
-  retries: 3
-  delay: 30
-
-# 7. Verification
-- name: Check service status
-  command: systemctl status nexus.service
-  register: service_status
-  failed_when: false
-  changed_when: false
-
-- name: Display service status
-  debug:
-    var: service_status.stdout
+  async: 30
+  poll: 0
