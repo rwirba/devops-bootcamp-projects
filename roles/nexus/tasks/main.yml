@@ -89,7 +89,7 @@
         src: nexus.service.j2
         dest: /etc/systemd/system/nexus.service
         mode: '0644'
-     notify: reload systemd
+      notify: reload systemd
       vars:
         nexus_user: nexus
         nexus_install_dir: "/opt/nexus"
