@@ -85,10 +85,11 @@
       tags: nexus_config
 
     - name: Deploy systemd service
-      template:
-        src: templates/nexus.service.j2
-        dest: "/etc/systemd/system/nexus.service"
+      ansible.builtin.template:
+        src: nexus.service.j2
+        dest: /etc/systemd/system/nexus.service
         mode: '0644'
+     notify: reload systemd
       vars:
         nexus_user: nexus
         nexus_install_dir: "/opt/nexus"
