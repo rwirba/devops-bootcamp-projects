@@ -1,15 +1,15 @@
 ---
-
 - name: Install base packages
   apt:
     name:
       - openjdk-11-jdk
       - lsof
       - curl
+      - unzip
     state: present
   tags: always
 
-- name: Increase file descriptors system-wide
+- name: Configure system limits for Nexus
   pam_limits:
     domain: '*'
     limit_type: '-'
@@ -17,31 +17,29 @@
     value: 65536
   tags: limits
 
-- name: Install and configure Nexus
-  vars:
-    nexus_version: "3.80.0-06"
-    nexus_install_dir: "/opt/nexus"
-    sonatype_work_dir: "/opt/sonatype-work/nexus3"
-  tasks:
-    - name: Create nexus user
+- name: Setup Nexus Repository
+  block:
+    - name: Create nexus user and group
       user:
         name: nexus
         shell: /bin/bash
-        home: "{{ nexus_install_dir }}"
+        home: "/opt/nexus"
         system: yes
         create_home: yes
+        group: nexus
       tags: nexus_user
 
-    - name: Download Nexus
+    - name: Download Nexus 3.81.1
       get_url:
-        url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-linux-x86_64.tar.gz"
-        dest: "/tmp/nexus-{{ nexus_version }}.tar.gz"
-        checksum: "sha256:8e5f9fc6c926d3d3e7f492e9938f3a8d4f304d3a6a4b5e5e5e5e5e5e5e5e5e5e5"
+        url: "https://download.sonatype.com/nexus/3/nexus-3.81.1-01-unix.tar.gz"
+        dest: "/tmp/nexus-3.81.1-01.tar.gz"
+        checksum: "sha256:7b331c5e299c91ec6c395b16b8a1a3a2a8a1f8e7e1e1e1e1e1e1e1e1e1e1e1e1"  # Update with actual checksum
+        timeout: 60
       tags: nexus_download
 
-    - name: Extract Nexus
+    - name: Extract and install Nexus
       unarchive:
-        src: "/tmp/nexus-{{ nexus_version }}.tar.gz"
+        src: "/tmp/nexus-3.81.1-01.tar.gz"
         dest: "/opt"
         remote_src: yes
         extra_opts: ["--strip-components=1"]
@@ -49,47 +47,49 @@
         group: nexus
       tags: nexus_install
 
-    - name: Create sonatype-work directory
+    - name: Configure Nexus directories
       file:
-        path: "{{ sonatype_work_dir }}"
+        path: "{{ item }}"
         state: directory
         owner: nexus
         group: nexus
         mode: '0755'
+      loop:
+        - "/opt/sonatype-work/nexus3"
+        - "/opt/nexus/etc"
       tags: nexus_dirs
 
-    - name: Configure nexus.vmoptions
-      blockinfile:
-        path: "{{ nexus_install_dir }}/bin/nexus.vmoptions"
-        block: |
-          -Xms2g
-          -Xmx2g
-          -XX:MaxDirectMemorySize=2g
-          -Dkaraf.data={{ sonatype_work_dir }}
+    - name: Configure JVM options
+      template:
+        src: templates/nexus.vmoptions.j2
+        dest: "/opt/nexus/bin/nexus.vmoptions"
         owner: nexus
         group: nexus
         mode: '0644'
+      vars:
+        java_xms: "2g"
+        java_xmx: "2g"
+        max_direct_memory: "2g"
       tags: nexus_config
 
-    - name: Create systemd service
+    - name: Deploy systemd service
       template:
-        src: "templates/nexus.service.j2"
+        src: templates/nexus.service.j2
         dest: "/etc/systemd/system/nexus.service"
         mode: '0644'
       vars:
         nexus_user: nexus
-        nexus_pid_file: "{{ nexus_install_dir }}/nexus.pid"
+        nexus_install_dir: "/opt/nexus"
         java_home: "/usr/lib/jvm/java-11-openjdk-amd64"
+      notify: reload systemd
       tags: nexus_service
 
-    - name: Reload systemd
-      systemd:
-        daemon_reload: yes
-      tags: nexus_service
+  tags: nexus_setup
 
-    - name: Enable and start Nexus
-      systemd:
-        name: nexus
-        state: started
-        enabled: yes
-      tags: nexus_service
+- name: Start and enable Nexus service
+  systemd:
+    name: nexus
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: nexus_service
