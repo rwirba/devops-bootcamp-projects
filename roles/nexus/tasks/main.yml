@@ -39,8 +39,6 @@
       get_url:
         url: "https://download.sonatype.com/nexus/3/nexus-3.81.1-01-unix.tar.gz"
         dest: "/tmp/nexus-3.81.1-01.tar.gz"
-        checksum: "sha256:7b331c5e299c91ec6c395b16b8a1a3a2a8a1f8e7e1e1e1e1e1e1e1e1e1e1e1e1"  # Update with actual checksum
-        timeout: 60
       tags: nexus_download
 
     - name: Extract and install Nexus
