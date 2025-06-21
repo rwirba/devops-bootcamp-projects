@@ -1,12 +1,13 @@
-# inventory/prod/aws_ec2.yml
 plugin: amazon.aws.aws_ec2
-regions:  
+regions:
   - us-east-1
 filters:
   tag:Env: prod
 keyed_groups:
   - key: tags.Name
     prefix: ""
+    lowercase: true
+    separator: ""
 hostnames:
   - private-ip-address
 compose:
