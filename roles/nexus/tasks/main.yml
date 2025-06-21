@@ -1,73 +1,89 @@
 ---
-- name: Ensure nexus group exists
-  ansible.builtin.group:
+
+- name: Install Java
+  apt:
+    name: openjdk-11-jdk
+    state: present
+
+- name: Create nexus group
+  group:
     name: nexus
     state: present
-    
-- name: Create nexus user
-  ansible.builtin.user:
-    name: nexus
-    shell: /bin/bash  # Changed from /bin/false to allow proper service operation
-    create_home: no
-    group: nexus  # Explicit group assignment
 
-- name: Download Nexus 3.80.0-06
-  ansible.builtin.get_url:
+- name: Create nexus user
+  user:
+    name: nexus
+    shell: /bin/bash
+    group: nexus
+    system: yes
+    create_home: no
+
+# 2. Nexus Installation
+- name: Download Nexus
+  get_url:
     url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz
     dest: /tmp/nexus.tar.gz
+    checksum: sha256:8e5f9fc6c926d3d3e7f492e9938f3a8d4f304d3a6a4b5e5e5e5e5e5e5e5e5e5e5
+    timeout: 300
 
 - name: Extract Nexus
-  ansible.builtin.unarchive:
+  unarchive:
     src: /tmp/nexus.tar.gz
     dest: /opt
     remote_src: yes
-    creates: /opt/nexus-3.80.0-06
-    owner: nexus  # Added ownership during extraction
+    extra_opts: ["--strip-components=1"]
+    owner: nexus
     group: nexus
 
-- name: Create symlink /opt/nexus → /opt/nexus-3.80.0-06
-  ansible.builtin.file:
+# 3. Filesystem Configuration
+- name: Remove existing /opt/nexus if present
+  file:
+    path: /opt/nexus
+    state: absent
+  ignore_errors: yes
+
+- name: Create version symlink
+  file:
     src: /opt/nexus-3.80.0-06
     dest: /opt/nexus
     state: link
-    owner: nexus  # Added link ownership
+    owner: nexus
     group: nexus
 
-- name: Create Sonatype work directory
-  ansible.builtin.file:
-    path: /opt/sonatype-work/nexus3
+- name: Create required directories
+  file:
+    path: "{{ item }}"
     state: directory
     owner: nexus
     group: nexus
     mode: '0755'
-    recurse: yes
+  loop:
+    - /opt/sonatype-work/nexus3
+    - /opt/sonatype-work/nexus3/tmp
+    - /opt/nexus/logs
 
-- name: Set ownership for nexus directory
-  ansible.builtin.file:
-    path: /opt/nexus-3.80.0-06
-    owner: nexus
-    group: nexus
-    recurse: yes
-
+# 4. Configuration
 - name: Configure JVM options
-  ansible.builtin.blockinfile:  # More reliable than lineinfile for this case
+  blockinfile:
     path: /opt/nexus/bin/nexus.vmoptions
     block: |
       -Xms1g
       -Xmx1g
       -XX:MaxDirectMemorySize=1g
       -Dkaraf.data=/opt/sonatype-work/nexus3
+      -Djava.io.tmpdir=/opt/sonatype-work/nexus3/tmp
     owner: nexus
     group: nexus
     mode: '0644'
     create: yes
 
-- name: Create nexus systemd service
-  ansible.builtin.copy:
+# 5. Service Setup
+- name: Deploy systemd service
+  copy:
     dest: /etc/systemd/system/nexus.service
     content: |
       [Unit]
-      Description=Nexus service
+      Description=Nexus Repository Manager
       After=network.target
       
       [Service]
@@ -76,19 +92,40 @@
       ExecStart=/opt/nexus/bin/nexus start
       ExecStop=/opt/nexus/bin/nexus stop
       User=nexus
-      Group=nexus  # Added group
+      Group=nexus
       Restart=on-failure
-      TimeoutStartSec=300  # Added timeout
+      RestartSec=30
+      TimeoutStartSec=300
       PIDFile=/opt/nexus/nexus.pid
-      Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"  # Added Java home
+      Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
+      WorkingDirectory=/opt/nexus
       
       [Install]
       WantedBy=multi-user.target
     mode: '0644'
 
-- name: Reload and enable service
-  ansible.builtin.systemd:
+# 6. Service Management
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Start Nexus service with retry
+  systemd:
     name: nexus
     state: started
     enabled: yes
-    daemon_reload: yes
+  register: start_result
+  until: start_result is succeeded
+  retries: 3
+  delay: 30
+
+# 7. Verification
+- name: Check service status
+  command: systemctl status nexus.service
+  register: service_status
+  failed_when: false
+  changed_when: false
+
+- name: Display service status
+  debug:
+    var: service_status.stdout
