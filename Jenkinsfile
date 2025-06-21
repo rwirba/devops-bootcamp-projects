@@ -28,28 +28,7 @@ pipeline {
             )
           ]) {
             sh '''
-              # Debug AWS environment
-              echo "=== ENVIRONMENT ==="
-              echo "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID"
-              echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
-              
-              # Verify Python environment
-              echo "=== PYTHON ENV ==="
-              python3 -c "import boto3; print(f'Boto3: {boto3.__version__}')"
-              ansible --version
-              
-              # Test AWS connectivity
-              echo "=== AWS CONNECTION TEST ==="
-              aws sts get-caller-identity || { echo "AWS Auth Failed!"; exit 1; }
-              
-              # Test inventory generation
-              echo "=== INVENTORY TEST ==="
-              ansible-inventory -i inventory/prod/aws_ec2.yml --list --output inventory.json
-              head -n 20 inventory.json
-              
-              # Run playbook with debug
-              echo "=== EXECUTING PLAYBOOK ==="
-              ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml -vvv
+              ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml
             '''
           }
         }
