@@ -280,7 +280,27 @@ After successful execution:
 
 ### Generate Access Token
 1. Access SonarQube dashboard:
+
 http://<sonarqube-server-ip>:9000
+   - Default credentials: `admin`/`admin`
+
+2. Navigate to:
+- Top-right profile icon → "My Account"
+- Go to "Security" tab
+- Click "Generate Tokens"
+- Enter a name (e.g., `jenkins-token`) and generate
+
+3. **Important**: Copy the token and store it securely (it will only be shown once)
+
+---
+
+## Nexus Repository Setup
+
+### Initial Configuration
+1. Access Nexus:
+
+http://<nexus-server-ip>:8081
+
 - First-time password is in: `/opt/sonatype-work/nexus3/admin.password`
 - Change password when prompted
 
