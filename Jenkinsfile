@@ -10,7 +10,7 @@ pipeline {
       steps {
         sh '''
           sudo apt update -y
-          sudo apt install -y python3-pip awscli
+          sudo apt install -y python3-pip awscli jq
           pip3 install --upgrade boto3 botocore
           ansible-galaxy collection install amazon.aws --force
         '''
@@ -30,7 +30,7 @@ pipeline {
             sh '''
               # Debug AWS environment
               echo "=== ENVIRONMENT ==="
-              echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:0:4}...${AWS_ACCESS_KEY_ID: -4}"
+              echo "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID"
               echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
               
               # Verify Python environment
@@ -45,7 +45,7 @@ pipeline {
               # Test inventory generation
               echo "=== INVENTORY TEST ==="
               ansible-inventory -i inventory/prod/aws_ec2.yml --list --output inventory.json
-              jq . < inventory.json | head -n 20
+              head -n 20 inventory.json
               
               # Run playbook with debug
               echo "=== EXECUTING PLAYBOOK ==="
