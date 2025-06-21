@@ -37,9 +37,8 @@
 
     - name: Download Nexus 3.80.0
       get_url:
-        url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-unix.tar.gz  # Changed to -unix
+        url: https://download.sonatype.com/nexus/3/nexus-3.80.0-06-linux-x86_64.tar.gz 
         dest: "/tmp/nexus-3.80.0-06.tar.gz"
-        checksum: "sha256:8e5f9fc6c926d3d3e7f492e9938f3a8d4f304d3a6a4b5e5e5e5e5e5e5e5e5e5e5"  # Must verify actual checksum!
       tags: nexus_download
 
     - name: Extract and install Nexus
@@ -59,7 +58,7 @@
         owner: nexus
         group: nexus
         mode: '0755'
-        recurse: yes  # Added recursive permission setting
+        recurse: yes  
       loop:
         - "/opt/sonatype-work/nexus3"
         - "/opt/nexus"
@@ -88,7 +87,7 @@
         nexus_user: nexus
         nexus_install_dir: "/opt/nexus"
         java_home: "/usr/lib/jvm/java-11-openjdk-amd64"
-      notify: reload systemd  # Only one notify needed
+      notify: reload systemd  
       tags: nexus_service
 
   tags: nexus_setup
