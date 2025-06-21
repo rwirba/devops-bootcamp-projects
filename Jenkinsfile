@@ -26,6 +26,31 @@ pipeline {
                 passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                 )]) {
                 sh '''
+                   # Debug AWS environment
+                   echo "=== AWS DEBUG INFO ==="
+                   echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:0:4}...${AWS_ACCESS_KEY_ID: -4}"
+                   echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
+                   env | grep AWS
+    
+                   # Debug Python/Ansible environment
+                   echo "=== PYTHON PATHS ==="
+                   python3 -c "import boto3; print(boto3.__version__); print(boto3.Session().get_credentials().access_key)"
+                   ansible --version
+    
+                   # Test AWS connectivity directly
+                   echo "=== AWS API TEST ==="
+                   AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+                   aws sts get-caller-identity --region us-east-1
+    
+                   # Test inventory generation
+                   echo "=== INVENTORY TEST ==="
+                   AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+                   ansible-inventory -i inventory/prod/aws_ec2.yml --list --export
+    
+                   # Now run playbook
+                  ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml -vvv
+                '''
+                sh '''
                     export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                     export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
                     ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml -vv
