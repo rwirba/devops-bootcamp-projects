@@ -344,6 +344,8 @@ http://<nexus-server-ip>:8081
 2. **Tool Configuration**:
 - Manage Jenkins → Tools
 - Add SonarQube Scanner installation
+- select Install automatically i.e jenkins will install sonarqube for you
+- Click Apply and save
 
 ### Set Up Credentials
 1. **Nexus Credentials**:
