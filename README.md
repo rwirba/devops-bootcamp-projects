@@ -334,7 +334,12 @@ http://<nexus-server-ip>:8081
 - Add server:
   - Name: `SonarQube`
   - Server URL: `http://<sonarqube-ip>:9000`
-  - Server authentication token: [paste token from SonarQube]
+  - Server authentication token:
+  - Click on ADD and select Jenkins
+  - Kind = secret text
+  - ID = sonar-token
+  - Secret = paste token from SonarQube
+  - Click Add
 
 2. **Tool Configuration**:
 - Manage Jenkins → Tools
