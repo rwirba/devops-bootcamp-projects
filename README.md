@@ -362,6 +362,20 @@ http://<nexus-server-ip>:8081
 
 ---
 
+2. **Install and Configure maven on jenkins slave node**:
+
+sudo apt install maven
+
+# Set M2_HOME and update PATH environment variable
+echo "export M2_HOME=/opt/maven" | sudo tee -a /etc/profile
+echo "export PATH=\$M2_HOME/bin:\$PATH" | sudo tee -a /etc/profile
+source /etc/profile
+
+# Verify Maven installation
+mvn -version
+
+
+
 ## Pipeline Integration
 
 ### Sample Jenkinsfile
