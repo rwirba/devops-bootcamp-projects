@@ -1,0 +1,13 @@
+<web-app>
+    <listener>
+        <listener-class>com.ezlearn.metrics.MetricsContextListener</listener-class>
+    </listener>
+    <servlet>
+        <servlet-name>metricsServlet</servlet-name>
+        <servlet-class>com.ezlearn.metrics.MetricsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>metricsServlet</servlet-name>
+        <url-pattern>/metrics</url-pattern>
+    </servlet-mapping>
+</web-app>
