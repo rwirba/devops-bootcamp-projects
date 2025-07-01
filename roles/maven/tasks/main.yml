@@ -1,25 +1,45 @@
+# roles/maven_install/tasks/main.yml
 ---
-- name: Download Maven
-  ansible.builtin.get_url:
-    url: https://archive.apache.org/dist/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
-    dest: /tmp/maven.tar.gz
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    update_cache: yes
+    pkg:
+      - wget
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
 
+- name: Download Apache Maven 3.8.9
+  ansible.builtin.get_url:
+    url: https://mirrors.estointernet.in/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.8.9-bin.tar.gz
+    dest: /tmp/apache-maven-3.8.9-bin.tar.gz
+    
 - name: Extract Maven to /opt
   ansible.builtin.unarchive:
-    src: /tmp/maven.tar.gz
-    dest: /opt/
+    src: /tmp/apache-maven-3.8.9-bin.tar.gz
+    dest: /opt
     remote_src: yes
+    extra_opts: ["--strip-components=1"]
+    creates: /opt/maven/bin/mvn
 
-- name: Create symlink for Maven
+- name: Create /opt/maven symlink
   ansible.builtin.file:
-    src: /opt/apache-maven-3.8.8
+    src: /opt/apache-maven-3.8.9
     dest: /opt/maven
     state: link
+    force: yes
 
-- name: Add Maven environment variables
+- name: Configure Maven environment
   ansible.builtin.copy:
     dest: /etc/profile.d/maven.sh
     content: |
       export M2_HOME=/opt/maven
+      export MAVEN_HOME=/opt/maven
       export PATH=$PATH:/opt/maven/bin
-    mode: '0755'
+    mode: 0644
+
+- name: Clean up downloaded tarball
+  ansible.builtin.file:
+    path: /tmp/apache-maven-3.8.9-bin.tar.gz
+    state: absent
