@@ -364,19 +364,26 @@ http://<nexus-server-ip>:8081
 
 2. **Install and Configure maven on jenkins slave node**:
 
-sudo apt install maven
+```bash
+apt update
+apt install -y wget ca-certificates curl gnupg lsb-release
+wget https://mirrors.estointernet.in/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+tar -xvf apache-maven-3.6.3-bin.tar.gz -C /opt
+mv /opt/apache-maven-3.6.3 /opt/maven
 
-# Set M2_HOME and update PATH environment variable
-echo "export M2_HOME=/opt/maven" | sudo tee -a /etc/profile
-echo "export PATH=\$M2_HOME/bin:\$PATH" | sudo tee -a /etc/profile
-source /etc/profile
-
-# Verify Maven installation
+bash -c 'cat <<EOF >/etc/profile.d/maven.sh
+export M2_HOME=/opt/maven
+export MAVEN_HOME=/opt/maven
+export PATH=\$PATH:\$M2_HOME/bin
+EOF'
 mvn -version
+```
 
 
 
-## Pipeline Integration
+## Pipeline App Deployment
+
+Please change branch to app-release
 
 ### Sample Jenkinsfile
 ```groovy
