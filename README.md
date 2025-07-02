@@ -334,11 +334,18 @@ http://<nexus-server-ip>:8081
 - Add server:
   - Name: `SonarQube`
   - Server URL: `http://<sonarqube-ip>:9000`
-  - Server authentication token: [paste token from SonarQube]
+  - Server authentication token:
+  - Click on ADD and select Jenkins
+  - Kind = secret text
+  - ID = sonar-token
+  - Secret = paste token from SonarQube
+  - Click Add
 
 2. **Tool Configuration**:
 - Manage Jenkins → Tools
 - Add SonarQube Scanner installation
+- select Install automatically i.e jenkins will install sonarqube for you
+- Click Apply and save
 
 ### Set Up Credentials
 1. **Nexus Credentials**:
@@ -355,7 +362,28 @@ http://<nexus-server-ip>:8081
 
 ---
 
-## Pipeline Integration
+2. **Install and Configure maven on jenkins slave node**:
+
+```bash
+apt update
+apt install -y wget ca-certificates curl gnupg lsb-release
+wget https://mirrors.estointernet.in/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+tar -xvf apache-maven-3.6.3-bin.tar.gz -C /opt
+mv /opt/apache-maven-3.6.3 /opt/maven
+
+bash -c 'cat <<EOF >/etc/profile.d/maven.sh
+export M2_HOME=/opt/maven
+export MAVEN_HOME=/opt/maven
+export PATH=\$PATH:\$M2_HOME/bin
+EOF'
+mvn -version
+```
+
+
+
+## Pipeline App Deployment
+
+Please change branch to app-release
 
 ### Sample Jenkinsfile
 ```groovy
