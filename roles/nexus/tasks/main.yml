@@ -5,7 +5,7 @@
     shell: /bin/false
     create_home: no
 
-- name: Download Nexus 3.80.0-06
+- name: Download Nexus 3.81.1-01
   ansible.builtin.get_url:
     url: https://download.sonatype.com/nexus/3/nexus-3.81.1-01-linux-x86_64.tar.gz
     dest: /tmp/nexus.tar.gz
@@ -15,11 +15,11 @@
     src: /tmp/nexus.tar.gz
     dest: /opt
     remote_src: yes
-    creates: /opt/nexus-3.80.0-06
+    creates: /opt/nexus-3.81.1-01
 
-- name: Create symlink /opt/nexus → /opt/nexus-3.80.0-06
+- name: Create symlink /opt/nexus → /opt/nexus-3.81.1-01
   ansible.builtin.file:
-    src: /opt/nexus-3.80.0-06
+    src: /opt/nexus-3.81.1-01
     dest: /opt/nexus
     state: link
     force: yes
@@ -35,7 +35,7 @@
 
 - name: Set ownership for nexus directory
   ansible.builtin.file:
-    path: /opt/nexus-3.80.0-06
+    path: /opt/nexus-3.81.1-01
     owner: nexus
     group: nexus
     recurse: yes
