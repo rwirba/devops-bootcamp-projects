@@ -12,6 +12,7 @@
   ansible.builtin.get_url:
     url: https://archive.apache.org/dist/maven/maven-3/3.9.8/binaries/apache-maven-3.9.8-bin.tar.gz
     dest: /tmp/apache-maven-3.9.8-bin.tar.gz
+    checksum: sha256:6d3b81d80c966a0e762e7b4913d4eddd5b8f1b9a3b2e2633a8f20a5372a6f706  # Verify this checksum
 
 - name: Create Maven installation directory
   ansible.builtin.file:

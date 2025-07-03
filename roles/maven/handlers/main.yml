@@ -1,0 +1,6 @@
+- name: Show success message
+  ansible.builtin.debug:
+    msg: |
+      Maven {{ maven_version.stdout_lines[0] }} successfully installed!
+      Available immediately in current shell.
+  when: maven_version.rc == 0
