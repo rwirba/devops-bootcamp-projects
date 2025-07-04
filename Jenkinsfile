@@ -6,6 +6,18 @@ pipeline {
   }
 
   stages {
+    stage('Install aws-cli on slave') {
+      agent {
+        label 'infra-build-node'
+      }  
+      steps {
+        sh '''
+          sudo apt install -y python3-pip awscli jq
+          pip3 install --upgrade boto3 botocore
+          ansible-galaxy collection install amazon.aws --force
+        '''  
+      }
+    }
     stage('Provision Infrastructure') {
       steps {
         sshagent(credentials: ['ssh-agent-key']) {
