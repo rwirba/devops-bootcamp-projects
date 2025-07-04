@@ -1,42 +1,37 @@
 ---
-- name: Install Maven using apt
-  hosts: all
-  become: yes
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
 
-  tasks:
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
+- name: Install Maven
+  ansible.builtin.apt:
+    name: maven
+    state: present
 
-    - name: Install Maven
-      ansible.builtin.apt:
-        name: maven
-        state: present
+- name: Set Maven environment variables
+  ansible.builtin.blockinfile:
+    path: /etc/environment
+    block: |
+      MAVEN_HOME=/usr/share/maven
+      M2_HOME=/usr/share/maven
+      PATH=/usr/share/maven/bin:$PATH
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - MAVEN"
 
-    - name: Set Maven environment variables
-      ansible.builtin.blockinfile:
-        path: /etc/environment
-        block: |
-          MAVEN_HOME=/usr/share/maven
-          M2_HOME=/usr/share/maven
-          PATH=/usr/share/maven/bin:$PATH
-        marker: "# {mark} ANSIBLE MANAGED BLOCK - MAVEN"
+- name: Create profile.d script
+  ansible.builtin.copy:
+    dest: /etc/profile.d/maven.sh
+    content: |
+      #!/bin/sh
+      export MAVEN_HOME=/usr/share/maven
+      export M2_HOME=/usr/share/maven
+      export PATH=/usr/share/maven/bin:$PATH
+    mode: '0755'
 
-    - name: Create profile.d script
-      ansible.builtin.copy:
-        dest: /etc/profile.d/maven.sh
-        content: |
-          #!/bin/sh
-          export MAVEN_HOME=/usr/share/maven
-          export M2_HOME=/usr/share/maven
-          export PATH=/usr/share/maven/bin:$PATH
-        mode: '0755'
+- name: Verify Maven installation
+  ansible.builtin.command: mvn --version
+  register: maven_version
+  changed_when: false
 
-    - name: Verify Maven installation
-      ansible.builtin.command: mvn --version
-      register: maven_version
-      changed_when: false
-
-    - name: Show Maven version
-      ansible.builtin.debug:
-        var: maven_version.stdout_lines
+- name: Show Maven version
+  ansible.builtin.debug:
+    var: maven_version.stdout_lines
