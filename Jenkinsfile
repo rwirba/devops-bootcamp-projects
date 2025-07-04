@@ -7,7 +7,6 @@ pipeline {
         NEXUS_REPO = 'ezlearn-release'
         DEPLOY_SERVER = 'ubuntu@184.72.200.252'
         DEPLOY_PATH = '/opt/tomcat/webapps'
-        WAR_NAME = 'ezlearn.war'
         VERSION = '1.0.0'
     }
 
@@ -52,13 +51,19 @@ pipeline {
             steps {
                 sh '''
                     mvn package
-                    cp target/ezlearn-${VERSION}.war target/ezlearn-latest.war
+                    cp target/ezlearn-1.0.0.war target/ezlearn.war
                 '''
             }
         }
 
         stage('Publish to Nexus') {
             steps {
+                script {
+                    // Generate timestamp for version
+                    env.TIMESTAMP = sh(script: "date +%Y%m%d%H%M%S", returnStdout: true).trim()
+                    env.DEPLOY_WAR_NAME = "ezlearn-${env.TIMESTAMP}.war"
+                    sh "cp target/ezlearn.war target/${env.DEPLOY_WAR_NAME}"
+                }
                 withCredentials([usernamePassword(
                     credentialsId: 'nexus-creds',
                     usernameVariable: 'NEXUS_USER',
@@ -67,14 +72,14 @@ pipeline {
                     sh '''
                         mvn deploy:deploy-file \
                           -DgroupId=com.ezlearn \
-                            -DartifactId=ezlearn \
-                            -Dversion=\$(date +%Y%m%d%H%M%S) \
-                            -Dpackaging=war \
-                            -Dfile=target/${WAR_NAME} \
-                            -DrepositoryId=ezlearn-release \
-                            -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                            -DgeneratePom=true \
-                            --settings jenkins/settings.xml
+                          -DartifactId=ezlearn \
+                          -Dversion=${env.TIMESTAMP} \
+                          -Dpackaging=war \
+                          -Dfile=target/${env.DEPLOY_WAR_NAME} \
+                          -DrepositoryId=ezlearn-release \
+                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
+                          -DgeneratePom=true \
+                          --settings jenkins/settings.xml
                     '''
                 }
             }
@@ -83,7 +88,7 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 sshagent (credentials: ['ssh-agent-key']) {
-                    sh "scp target/ezlearn-latest.war ${DEPLOY_SERVER}:${DEPLOY_PATH}/${WAR_NAME}"
+                    sh "scp target/ezlearn.war ${DEPLOY_SERVER}:${DEPLOY_PATH}/ezlearn.war"
                 }
             }
         }
