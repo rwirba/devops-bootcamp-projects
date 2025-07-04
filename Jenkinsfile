@@ -59,28 +59,31 @@ pipeline {
         stage('Publish to Nexus') {
             steps {
                 script {
-                    // Generate timestamp for version
-                    env.TIMESTAMP = sh(script: "date +%Y%m%d%H%M%S", returnStdout: true).trim()
-                    env.DEPLOY_WAR_NAME = "ezlearn-${env.TIMESTAMP}.war"
-                    sh "cp target/ezlearn.war target/${env.DEPLOY_WAR_NAME}"
-                }
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-creds',
-                    usernameVariable: 'NEXUS_USER',
-                    passwordVariable: 'NEXUS_PASS'
-                )]) {
-                    sh """
-                        mvn deploy:deploy-file \
-                          -DgroupId=com.ezlearn \
-                          -DartifactId=ezlearn \
-                          -Dversion=${env.TIMESTAMP} \
-                          -Dpackaging=war \
-                          -Dfile=target/${env.DEPLOY_WAR_NAME} \
-                          -DrepositoryId=ezlearn-release \
-                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                          -DgeneratePom=true \
-                          --settings jenkins/settings.xml
-                    """
+                    def timestamp = sh(script: "date +%Y%m%d%H%M%S", returnStdout: true).trim()
+                    def warName = "ezlearn-${timestamp}.war"
+                    def warPath = "target/${warName}"
+
+                    // Copy WAR with versioned filename
+                    sh "cp target/ezlearn.war ${warPath}"
+
+                    withCredentials([usernamePassword(
+                        credentialsId: 'nexus-creds',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                    )]) {
+                        def mvnCmd = "mvn deploy:deploy-file" +
+                                    " -DgroupId=com.ezlearn" +
+                                    " -DartifactId=ezlearn" +
+                                    " -Dversion=${timestamp}" +
+                                    " -Dpackaging=war" +
+                                    " -Dfile=${warPath}" +
+                                    " -DrepositoryId=ezlearn-release" +
+                                    " -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/" +
+                                    " -DgeneratePom=true" +
+                                    " --settings jenkins/settings.xml"
+
+                        sh mvnCmd
+                    }    
                 }
             }
         }
