@@ -12,6 +12,8 @@ pipeline {
           sudo apt install -y python3-pip awscli jq
           pip3 install --upgrade boto3 botocore
           ansible-galaxy collection install amazon.aws --force
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt install -y nodejs
         '''  
       }
     }
