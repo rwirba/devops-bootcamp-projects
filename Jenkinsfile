@@ -2,12 +2,13 @@ pipeline {
     agent { label 'infra-build-node' }
 
     environment {
-        SONARQUBE_SERVER = 'SonarQube' // Jenkins SonarQube server config name
+        SONARQUBE_SERVER = 'SonarQube'
         NEXUS_URL = 'http://nexus.mitechnology.org:8081'
         NEXUS_REPO = 'ezlearn-release'
         DEPLOY_SERVER = 'ubuntu@184.72.200.252'
         DEPLOY_PATH = '/opt/tomcat/webapps'
         WAR_NAME = 'ezlearn.war'
+        VERSION = '1.0.0'
     }
 
     stages {
@@ -49,7 +50,10 @@ pipeline {
 
         stage('Package WAR') {
             steps {
-                sh 'mvn package'
+                sh '''
+                    mvn package
+                    cp target/ezlearn-${VERSION}.war target/ezlearn-latest.war
+                '''
             }
         }
 
@@ -60,19 +64,31 @@ pipeline {
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
-                    sh """
+                    sh '''
                         mvn deploy:deploy-file \
                           -DgroupId=com.ezlearn \
                           -DartifactId=ezlearn \
-                          -Dversion=1.0.0 \
+                          -Dversion=${VERSION} \
                           -Dpackaging=war \
-                          -Dfile=target/${WAR_NAME} \
+                          -Dfile=target/ezlearn-${VERSION}.war \
                           -DrepositoryId=ezlearn-release \
                           -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
                           -DgeneratePom=true \
                           -Dusername=$NEXUS_USER \
                           -Dpassword=$NEXUS_PASS
-                    """
+
+                        mvn deploy:deploy-file \
+                          -DgroupId=com.ezlearn \
+                          -DartifactId=ezlearn \
+                          -Dversion=latest \
+                          -Dpackaging=war \
+                          -Dfile=target/ezlearn-latest.war \
+                          -DrepositoryId=ezlearn-release \
+                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
+                          -DgeneratePom=true \
+                          -Dusername=$NEXUS_USER \
+                          -Dpassword=$NEXUS_PASS
+                    '''
                 }
             }
         }
@@ -80,7 +96,7 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 sshagent (credentials: ['ssh-agent-key']) {
-                    sh "scp target/${WAR_NAME} ${DEPLOY_SERVER}:${DEPLOY_PATH}/"
+                    sh "scp target/ezlearn-latest.war ${DEPLOY_SERVER}:${DEPLOY_PATH}/${WAR_NAME}"
                 }
             }
         }
