@@ -7,9 +7,6 @@ pipeline {
 
   stages {
     stage('Install aws-cli on slave') {
-      agent {
-        label 'infra-build-node'
-      }  
       steps {
         sh '''
           sudo apt install -y python3-pip awscli jq
