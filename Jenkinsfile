@@ -92,8 +92,9 @@ pipeline {
             steps {
                 sshagent (credentials: ['ssh-agent-key']) {
                    sh """  
-                        scp -o StrictHostKeyChecking=no target/ezlearn.war ${DEPLOY_SERVER}:/tmp/ezlearn.war
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} 'sudo mv /tmp/ezlearn.war ${DEPLOY_PATH}/ezlearn.war && sudo chown tomcat:tomcat ${DEPLOY_PATH}/ezlearn.war'
+                        scp target/ezlearn.war target/ROOT.war
+                        scp -o StrictHostKeyChecking=no target/ROOT.war ${DEPLOY_SERVER}:/tmp/ROOT.war
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} 'sudo mv /tmp/ROOT.war ${DEPLOY_PATH}/ROOT.war && sudo chown tomcat:tomcat ${DEPLOY_PATH}/ROOT.war'
                     """    
                 }
             }
