@@ -35,10 +35,13 @@ public class MetricsContextListener implements ServletContextListener {
         new ProcessorMetrics().bindTo(prometheusRegistry);
         new UptimeMetrics().bindTo(prometheusRegistry);
 
-        Manager manager = new StandardManager();
-        new TomcatMetrics(manager, Tags.empty()).bindTo(prometheusRegistry);
+        final Manager manager = new StandardManager();
+        new TomcatMetrics(manager, Tags.empty())
+            .bindTo(prometheusRegistry);
 
-        sce.getServletContext().setAttribute("prometheusRegistry", prometheusRegistry);
+        sce.getServletContext().setAttribute(
+            "prometheusRegistry", prometheusRegistry
+        );
     }
 
     @Override
