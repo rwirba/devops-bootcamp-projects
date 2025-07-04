@@ -98,23 +98,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependencies>
-        <!-- Servlet API -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- JUnit 5 -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Micrometer Prometheus Registry -->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -129,21 +112,14 @@
             <version>1.11.0</version>
         </dependency>
 
-        <!-- Micrometer Tomcat Bindings -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-core</artifactId>
-            <version>1.11.0</version>
-        </dependency>
-
-        <!-- For Logback Metrics -->
+        <!-- Logback for metrics -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.4.11</version>
         </dependency>
 
-        <!-- For Tomcat manager session monitoring -->
+        <!-- Tomcat internals (for session metrics) -->
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-catalina</artifactId>
@@ -151,5 +127,4 @@
         </dependency>
     </dependencies>
 
-    </dependencies>
 </project>
