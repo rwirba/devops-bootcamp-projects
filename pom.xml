@@ -97,7 +97,6 @@
             <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
-        </dependency>
     </dependencies>
 
 </project>
