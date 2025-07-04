@@ -2,7 +2,7 @@ pipeline {
     agent { label 'infra-build-node' }
 
     environment {
-        SONARQUBE_SERVER = 'sonar' // Jenkins SonarQube server config name
+        SONARQUBE_SERVER = 'SonarQube' // Jenkins SonarQube server config name
         NEXUS_URL = 'http://nexus.mitechnology.org:8081'
         NEXUS_REPO = 'ezlearn-release'
         DEPLOY_SERVER = 'ubuntu@184.72.200.252'
