@@ -67,27 +67,14 @@ pipeline {
                     sh '''
                         mvn deploy:deploy-file \
                           -DgroupId=com.ezlearn \
-                          -DartifactId=ezlearn \
-                          -Dversion=${VERSION} \
-                          -Dpackaging=war \
-                          -Dfile=target/ezlearn-${VERSION}.war \
-                          -DrepositoryId=ezlearn-release \
-                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                          -DgeneratePom=true \
-                          -Dusername=$NEXUS_USER \
-                          -Dpassword=$NEXUS_PASS
-
-                        mvn deploy:deploy-file \
-                          -DgroupId=com.ezlearn \
-                          -DartifactId=ezlearn \
-                          -Dversion=latest \
-                          -Dpackaging=war \
-                          -Dfile=target/ezlearn-latest.war \
-                          -DrepositoryId=ezlearn-release \
-                          -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                          -DgeneratePom=true \
-                          -Dusername=$NEXUS_USER \
-                          -Dpassword=$NEXUS_PASS
+                            -DartifactId=ezlearn \
+                            -Dversion=\$(date +%Y%m%d%H%M%S) \
+                            -Dpackaging=war \
+                            -Dfile=target/${WAR_NAME} \
+                            -DrepositoryId=ezlearn-release \
+                            -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
+                            -DgeneratePom=true \
+                            --settings jenkins/settings.xml
                     '''
                 }
             }
