@@ -1,79 +1,20 @@
-- name: Update apt package index
-  apt:
-    update_cache: yes
-
-- name: Install base packages
+---
+- name: Install python3-pip, awscli, and jq
   apt:
     name:
       - python3-pip
+      - awscli
       - jq
-      - unzip
-      - python3-venv
-      - python3-full
     state: present
+    update_cache: yes
 
-- name: Install AWS CLI v2 (official method)
-  block:
-    - name: Download AWS CLI
-      get_url:
-        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-        dest: /tmp/awscliv2.zip
-      
-    - name: Unzip AWS CLI
-      unarchive:
-        src: /tmp/awscliv2.zip
-        dest: /tmp
-        remote_src: yes
-
-    - name: Install AWS CLI
-      command: /tmp/aws/install
-      args:
-        creates: /usr/local/bin/aws
-
-    - name: Clean up installation files
-      file:
-        path: /tmp/awscliv2.zip
-        state: absent
-
-- name: Create virtual environment for Python packages
-  command: python3 -m venv /opt/aws-venv
-  args:
-    creates: /opt/aws-venv/bin/python
-
-- name: Install Python packages in venv
+- name: Upgrade boto3 and botocore via pip3
   pip:
     name:
       - boto3
       - botocore
     state: latest
-    executable: /opt/aws-venv/bin/pip
-    virtualenv: /opt/aws-venv
+    executable: pip3
 
-- name: Install Amazon AWS Ansible collection
-  command: ansible-galaxy collection install amazon.aws --force
-  args:
-    creates: "{{ ansible_collections_path }}/amazon/aws"
-
-- name: Set global PATH for venv binaries
-  lineinfile:
-    path: /etc/environment
-    line: 'PATH="/opt/aws-venv/bin:{{ ansible_env.PATH }}"'
-    regexp: '^PATH='
-    state: present
-
-- name: Verify installations
-  block:
-    - name: Check AWS CLI version
-      command: aws --version
-      register: aws_version
-
-    - name: Check Python packages
-      command: /opt/aws-venv/bin/pip show boto3 botocore
-      register: pip_packages
-
-    - name: Display versions
-      debug:
-        msg: |
-          AWS CLI: {{ aws_version.stdout }}
-          Python Packages:
-          {{ pip_packages.stdout }}
+- name: Install amazon.aws collection
+  ansible.builtin.command: ansible-galaxy collection install amazon.aws --force
