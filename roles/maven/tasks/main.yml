@@ -1,71 +1,42 @@
-- name: Install prerequisite packages
-  ansible.builtin.apt:
-    update_cache: yes
-    pkg:
-      - wget
-      - ca-certificates
-      - curl
-      - gnupg
-      - lsb-release
+---
+- name: Install Maven using apt
+  hosts: all
+  become: yes
 
-- name: Download Apache Maven 3.9.8
-  ansible.builtin.get_url:
-    url: https://archive.apache.org/dist/maven/maven-3/3.9.8/binaries/apache-maven-3.9.8-bin.tar.gz
-    dest: /tmp/apache-maven-3.9.8-bin.tar.gz
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
 
-- name: Create Maven installation directory
-  ansible.builtin.file:
-    path: /opt/apache-maven-3.9.8
-    state: directory
-    mode: '0755'
+    - name: Install Maven
+      ansible.builtin.apt:
+        name: maven
+        state: present
 
-- name: Extract Maven
-  ansible.builtin.unarchive:
-    src: /tmp/apache-maven-3.9.8-bin.tar.gz
-    dest: /opt
-    remote_src: yes
-    extra_opts: ["--strip-components=1"]
-    creates: /opt/apache-maven-3.9.8/bin/mvn
+    - name: Set Maven environment variables
+      ansible.builtin.blockinfile:
+        path: /etc/environment
+        block: |
+          MAVEN_HOME=/usr/share/maven
+          M2_HOME=/usr/share/maven
+          PATH=/usr/share/maven/bin:$PATH
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - MAVEN"
 
-- name: Create symlink
-  ansible.builtin.file:
-    src: /opt/apache-maven-3.9.8
-    dest: /opt/maven
-    state: link
-    force: yes
+    - name: Create profile.d script
+      ansible.builtin.copy:
+        dest: /etc/profile.d/maven.sh
+        content: |
+          #!/bin/sh
+          export MAVEN_HOME=/usr/share/maven
+          export M2_HOME=/usr/share/maven
+          export PATH=/usr/share/maven/bin:$PATH
+        mode: '0755'
 
-- name: Configure system-wide environment
-  ansible.builtin.blockinfile:
-    path: /etc/environment
-    block: |
-      M2_HOME=/opt/maven
-      MAVEN_HOME=/opt/maven
-      PATH=/opt/maven/bin:$PATH
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - MAVEN"
+    - name: Verify Maven installation
+      ansible.builtin.command: mvn --version
+      register: maven_version
+      changed_when: false
 
-- name: Create profile.d script for all users
-  ansible.builtin.copy:
-    dest: /etc/profile.d/maven.sh
-    content: |
-      #!/bin/sh
-      export M2_HOME=/opt/maven
-      export MAVEN_HOME=/opt/maven
-      export PATH=/opt/maven/bin:$PATH
-    mode: '0755'
-
-- name: Load environment into current session
-  ansible.builtin.shell: |
-    . /etc/profile.d/maven.sh
-  args:
-    executable: /bin/bash
-
-- name: Verify Maven installation
-  ansible.builtin.command: mvn --version
-  register: maven_version
-  changed_when: false
-  failed_when: maven_version.rc != 0
-
-- name: Clean up temporary files
-  ansible.builtin.file:
-    path: /tmp/apache-maven-3.9.8-bin.tar.gz
-    state: absent
+    - name: Show Maven version
+      ansible.builtin.debug:
+        var: maven_version.stdout_lines
