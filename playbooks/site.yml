@@ -11,6 +11,12 @@
   roles:
     - maven
 
+- name: Install awscli on slave 
+  hosts: jenkins_slave
+  become: yes 
+  roles:
+    - aws_cli    
+
 - name: Setup SonarQube
   hosts: sonarqube
   become: yes
