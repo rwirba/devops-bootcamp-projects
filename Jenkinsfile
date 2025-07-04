@@ -6,17 +6,6 @@ pipeline {
   }
 
   stages {
-    stage('Install Required Packages') {
-      steps {
-        sh '''
-          sudo apt update -y
-          sudo apt install -y python3-pip awscli jq
-          pip3 install --upgrade boto3 botocore
-          ansible-galaxy collection install amazon.aws --force
-        '''
-      }
-    }
-
     stage('Provision Infrastructure') {
       steps {
         sshagent(credentials: ['ssh-agent-key']) {
