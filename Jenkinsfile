@@ -69,7 +69,7 @@ pipeline {
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
-                    sh '''
+                    sh """
                         mvn deploy:deploy-file \
                           -DgroupId=com.ezlearn \
                           -DartifactId=ezlearn \
@@ -80,7 +80,7 @@ pipeline {
                           -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
                           -DgeneratePom=true \
                           --settings jenkins/settings.xml
-                    '''
+                    """
                 }
             }
         }
