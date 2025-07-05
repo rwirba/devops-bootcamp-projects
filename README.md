@@ -1,5 +1,7 @@
 To properly configure your SonarQube UI to work with your Jenkins pipeline and quality gates, follow these steps:
 
+Install warning plugin in jenkins
+
 1. Configure Project Settings
 Go to your project in SonarQube (http://sonarqube.mitechnology.org:9000/dashboard?id=ezlearn)
 
