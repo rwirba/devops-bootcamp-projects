@@ -6,7 +6,7 @@
 <module name="Checker">
   <property name="charset" value="UTF-8"/>
   <property name="severity" value="error"/>
-  
+
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>
   </module>
@@ -36,7 +36,6 @@
 
     <!-- Javadoc -->
     <module name="JavadocMethod">
-      <property name="scope" value="public"/>
       <property name="allowMissingParamTags" value="true"/>
       <property name="allowMissingThrowsTags" value="true"/>
       <property name="allowMissingReturnTag" value="true"/>
