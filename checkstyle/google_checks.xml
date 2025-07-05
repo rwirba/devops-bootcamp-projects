@@ -7,10 +7,6 @@
   <property name="charset" value="UTF-8"/>
   <property name="severity" value="error"/>
   
-  <module name="BeforeExecutionExclusionFileFilter">
-    <property name="fileNamePattern" value=".*(Generated|Service|Impl)\.java$"/>
-  </module>
-
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>
   </module>
@@ -33,11 +29,8 @@
     <module name="RedundantImport"/>
     <module name="UnusedImports"/>
 
-    <!-- Javadoc -->
-    <module name="JavadocMethod">
-      <property name="tokens" value="METHOD_DEF"/>
-      <property name="scope" value="public"/>
-    </module>
+    <!-- Javadoc - Simplified version -->
+    <module name="JavadocMethod"/>
     <module name="JavadocType"/>
     <module name="JavadocVariable"/>
 

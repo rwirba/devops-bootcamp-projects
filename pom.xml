@@ -22,6 +22,7 @@
         <jacoco.version>0.8.11</jacoco.version>
         <sonar-maven-plugin.version>3.11.0.3922</sonar-maven-plugin.version>
         <checkstyle.version>3.3.0</checkstyle.version>
+        <checkstyle.tool.version>8.45</checkstyle.tool.version>
     </properties>
 
     <dependencies>
@@ -110,20 +111,30 @@
                 </executions>
             </plugin>
 
-            <!-- Checkstyle -->
+            <!-- Fixed Checkstyle Configuration -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkstyle.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.tool.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <configLocation>checkstyle/google_checks.xml</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
-                    <failsOnError>true</failsOnError>
-                    <violationSeverity>warning</violationSeverity>
+                    <failOnViolation>true</failOnViolation>
+                    <violationSeverity>error</violationSeverity>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <excludes>**/generated-sources/**</excludes>
                 </configuration>
                 <executions>
                     <execution>
+                        <id>validate</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>check</goal>
@@ -152,6 +163,11 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle.version}</version>
             </plugin>
         </plugins>
     </reporting>
