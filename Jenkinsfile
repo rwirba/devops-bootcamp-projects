@@ -28,7 +28,7 @@ pipeline {
             )
           ]) {
             sh '''
-              ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml --limit jenkins_slave
+              ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml 
             '''
           }
         }
