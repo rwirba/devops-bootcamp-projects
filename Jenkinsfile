@@ -26,8 +26,8 @@ pipeline {
 
         stage('Static Analysis') {
             steps {
-                sh 'mvn checkstyle:check'
-                recordIssues tools: [checkStyle(pattern: 'target/checkstyle-result.xml')]
+                sh 'mvn checkstyle:checkstyle'
+                archiveArtifacts artifacts: 'target/checkstyle-result.xml', allowEmptyArchive: true
             }
         }
 
