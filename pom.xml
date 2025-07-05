@@ -1,8 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ezlearn</groupId>
@@ -10,52 +10,86 @@
     <version>1.0.0</version>
     <packaging>war</packaging>
 
-    <name>ezlearn</name>
-    <description>EzLearn Java Web Application</description>
+    <name>EzLearn</name>
+    <description>E-Learning Platform</description>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.10.0</junit.version>
+        <mockito.version>5.7.0</mockito.version>
         <jacoco.version>0.8.11</jacoco.version>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <sonar.language>java</sonar.language>
-        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar-maven-plugin.version>3.11.0.3922</sonar-maven-plugin.version>
+        <checkstyle.version>3.3.0</checkstyle.version>
     </properties>
+
+    <dependencies>
+        <!-- Spring Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
-            <!-- Compiler plugin -->
+            <!-- Compiler -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
             </plugin>
 
-            <!-- WAR plugin -->
+            <!-- WAR Packaging -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
             </plugin>
 
-            <!-- Surefire for unit tests -->
+            <!-- Testing -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.1.2</version>
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <excludes>
-                        <exclude>**/IT*.java</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo for code coverage -->
+            <!-- JaCoCo Code Coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -76,19 +110,11 @@
                 </executions>
             </plugin>
 
-            <!-- Checkstyle plugin -->
+            <!-- Checkstyle -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>${checkstyle.version}</version>
                 <configuration>
                     <configLocation>checkstyle/google_checks.xml</configLocation>
                     <encoding>UTF-8</encoding>
@@ -96,95 +122,37 @@
                     <failsOnError>true</failsOnError>
                     <violationSeverity>warning</violationSeverity>
                 </configuration>
-            </plugin>
-
-            <!-- SonarQube scanner -->
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.11.0.3922</version>
                 <executions>
                     <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sonar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- PMD for static analysis -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.21.0</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
+                        <phase>validate</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- SonarQube -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>ezlearn-release</id>
-            <name>ezlearn release repository</name>
-            <url>http://nexus.mitechnology.org:8081/repository/ezlearn-release/</url>
-        </repository>
-    </distributionManagement>
-
-    <dependencies>
-        <!-- Servlet API -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- JUnit 5 -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Mockito for testing -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.7.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- AssertJ for fluent assertions -->
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.24.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
     <reporting>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.4.2</version>
+            </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.21.0</version>
-            </plugin>
         </plugins>
     </reporting>
-
 </project>

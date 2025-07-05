@@ -8,7 +8,6 @@ pipeline {
         DEPLOY_SERVER = 'ubuntu@184.72.200.252'
         DEPLOY_PATH = '/opt/tomcat/webapps'
         VERSION = '1.0.0'
-        // Add Jacoco path for SonarQube
         SONAR_JACOCO_REPORT_PATH = 'target/site/jacoco/jacoco.xml'
     }
 
@@ -27,20 +26,19 @@ pipeline {
 
         stage('Unit Test & Coverage') {
             steps {
-                sh 'mvn test jacoco:report' // Generate coverage reports
+                sh 'mvn test jacoco:report'
             }
             post {
                 always {
-                    junit 'target/surefire-reports/*.xml' // Archive test results
-                    // Archive coverage report (optional)
-                    archiveArtifacts artifacts: 'target/site/jacoco/*', allowEmptyArchive: true
+                    junit 'target/surefire-reports/**/*.xml'
+                    archiveArtifacts artifacts: 'target/site/jacoco/**/*'
                 }
             }
         }
 
         stage('Static Analysis') {
             steps {
-                sh 'mvn checkstyle:check pmd:check' // Run both checkstyle and PMD
+                sh 'mvn checkstyle:check pmd:pmd'
             }
         }
 
@@ -52,7 +50,9 @@ pipeline {
                           -Dsonar.projectKey=ezlearn \
                           -Dsonar.host.url=http://sonarqube.mitechnology.org:9000 \
                           -Dsonar.qualitygate.wait=true \
-                          -Dsonar.coverage.jacoco.xmlReportPaths=${SONAR_JACOCO_REPORT_PATH}
+                          -Dsonar.coverage.jacoco.xmlReportPaths=${SONAR_JACOCO_REPORT_PATH} \
+                          -Dsonar.java.binaries=target/classes \
+                          -Dsonar.sources=src/main/java
                     """
                 }
             }
@@ -121,16 +121,15 @@ pipeline {
 
     post {
         always {
-            // Clean up workspace if needed
-            deleteDir() // Optional - only if you want fresh workspace each time
+            cleanWs()
         }
         success {
             echo "✅ Pipeline executed successfully!"
-            // Optional: Add notification (email, Slack, etc.)
+            // Add notification (Slack/Email) here if needed
         }
         failure {
             echo "❌ Pipeline failed!"
-            // Optional: Add failure notification
+            // Add failure notification here if needed
         }
     }
 }

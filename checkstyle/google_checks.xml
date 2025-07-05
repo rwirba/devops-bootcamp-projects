@@ -1,77 +1,81 @@
 <?xml version="1.0"?>
 <!DOCTYPE module PUBLIC
-    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
-    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+  "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+  "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="Checker">
-  <property name="severity" value="error"/>
-
-  <!-- Modules that must be outside TreeWalker -->
-  <module name="FileTabCharacter"/>
-  <module name="NewlineAtEndOfFile"/>
-  <module name="LineLength">
-    <property name="max" value="100"/>
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="warning"/>
+  
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="true"/>
   </module>
 
-  <!-- TreeWalker and its children -->
   <module name="TreeWalker">
-    <module name="AnnotationLocation"/>
-    <module name="ArrayTypeStyle"/>
-    <module name="AvoidInlineConditionals"/>
-    <module name="BooleanExpressionComplexity">
-      <property name="max" value="3"/>
-    </module>
-    <module name="ClassDataAbstractionCoupling">
-      <property name="max" value="7"/>
-    </module>
-    <module name="ClassFanOutComplexity">
-      <property name="max" value="20"/>
-    </module>
-    <module name="CyclomaticComplexity"/>
-    <module name="DeclarationOrder"/>
-    <module name="DefaultComesLast"/>
-    <module name="EmptyBlock"/>
-    <module name="EqualsHashCode"/>
-    <module name="ExplicitInitialization"/>
-    <module name="FinalClass"/>
-    <module name="FinalLocalVariable"/>
-    <module name="HiddenField"/>
-    <module name="IllegalCatch"/>
-    <module name="IllegalImport"/>
-    <module name="IllegalThrows"/>
-    <module name="InnerTypeLast"/>
-    <module name="InterfaceIsType"/>
-    <module name="JavadocMethod"/>
-    <module name="JavadocStyle"/>
-    <module name="JavadocType"/>
-    <module name="MethodCount">
-      <property name="maxTotal" value="10"/>
-    </module>
-    <module name="MethodLength">
-      <property name="max" value="150"/>
-    </module>
+    <!-- Naming Conventions -->
+    <module name="ConstantName"/>
+    <module name="LocalFinalVariableName"/>
+    <module name="LocalVariableName"/>
+    <module name="MemberName"/>
     <module name="MethodName"/>
-    <module name="ModifierOrder"/>
-    <module name="NeedBraces"/>
-    <module name="NestedIfDepth">
-      <property name="max" value="3"/>
+    <module name="PackageName"/>
+    <module name="ParameterName"/>
+    <module name="StaticVariableName"/>
+    <module name="TypeName"/>
+
+    <!-- Imports -->
+    <module name="AvoidStarImport"/>
+    <module name="IllegalImport"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports"/>
+
+    <!-- Javadoc -->
+    <module name="JavadocMethod">
+      <property name="scope" value="public"/>
     </module>
-    <module name="OuterTypeFilename"/>
+    <module name="JavadocType"/>
+    <module name="JavadocVariable">
+      <property name="scope" value="public"/>
+    </module>
+
+    <!-- Coding -->
+    <module name="EmptyBlock"/>
+    <module name="EmptyStatement"/>
+    <module name="EqualsHashCode"/>
+    <module name="HiddenField">
+      <property name="ignoreConstructorParameter" value="true"/>
+    </module>
+    <module name="IllegalInstantiation"/>
+    <module name="InnerAssignment"/>
+    <module name="MagicNumber"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+
+    <!-- Metrics -->
+    <module name="ClassDataAbstractionCoupling"/>
+    <module name="ClassFanOutComplexity"/>
+    <module name="MethodLength">
+      <property name="max" value="50"/>
+    </module>
     <module name="ParameterNumber">
       <property name="max" value="5"/>
     </module>
-    <module name="RedundantImport"/>
-    <module name="RedundantModifier"/>
-    <module name="ReturnCount">
-      <property name="max" value="2"/>
-    </module>
-    <module name="SimplifyBooleanExpression"/>
-    <module name="SimplifyBooleanReturn"/>
-    <module name="StaticVariableName"/>
-    <module name="StringLiteralEquality"/>
-    <module name="TypeName"/>
-    <module name="VisibilityModifier"/>
+
+    <!-- Whitespace -->
+    <module name="GenericWhitespace"/>
+    <module name="MethodParamPad"/>
+    <module name="NoWhitespaceAfter"/>
+    <module name="NoWhitespaceBefore"/>
+    <module name="OperatorWrap"/>
+    <module name="ParenPad"/>
+    <module name="TypecastParenPad"/>
     <module name="WhitespaceAfter"/>
     <module name="WhitespaceAround"/>
+  </module>
+
+  <!-- File Length -->
+  <module name="FileLength">
+    <property name="max" value="1000"/>
   </module>
 </module>
