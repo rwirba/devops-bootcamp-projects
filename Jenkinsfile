@@ -8,6 +8,8 @@ pipeline {
         DEPLOY_SERVER = 'ubuntu@184.72.200.252'
         DEPLOY_PATH = '/opt/tomcat/webapps'
         VERSION = '1.0.0'
+        // Add Jacoco path for SonarQube
+        SONAR_JACOCO_REPORT_PATH = 'target/site/jacoco/jacoco.xml'
     }
 
     stages {
@@ -23,26 +25,43 @@ pipeline {
             }
         }
 
-        stage('Unit Test') {
+        stage('Unit Test & Coverage') {
             steps {
-                sh 'mvn test'
+                sh 'mvn test jacoco:report' // Generate coverage reports
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml' // Archive test results
+                    // Archive coverage report (optional)
+                    archiveArtifacts artifacts: 'target/site/jacoco/*', allowEmptyArchive: true
+                }
             }
         }
 
-        stage('Checkstyle Analysis') {
+        stage('Static Analysis') {
             steps {
-                sh 'mvn checkstyle:check'
+                sh 'mvn checkstyle:check pmd:check' // Run both checkstyle and PMD
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh '''
+                    sh """
                         mvn sonar:sonar \
                           -Dsonar.projectKey=ezlearn \
-                          -Dsonar.host.url=http://sonarqube.mitechnology.org:9000
-                    '''
+                          -Dsonar.host.url=http://sonarqube.mitechnology.org:9000 \
+                          -Dsonar.qualitygate.wait=true \
+                          -Dsonar.coverage.jacoco.xmlReportPaths=${SONAR_JACOCO_REPORT_PATH}
+                    """
+                }
+            }
+        }
+
+        stage('Quality Gate Check') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -51,7 +70,7 @@ pipeline {
             steps {
                 sh '''
                     mvn package
-                    cp target/ezlearn-1.0.0.war target/ezlearn.war
+                    cp target/ezlearn-${VERSION}.war target/ezlearn.war
                 '''
             }
         }
@@ -63,7 +82,6 @@ pipeline {
                     def warName = "ezlearn-${timestamp}.war"
                     def warPath = "target/${warName}"
 
-                    // Copy WAR with versioned filename
                     sh "cp target/ezlearn.war ${warPath}"
 
                     withCredentials([usernamePassword(
@@ -103,20 +121,16 @@ pipeline {
 
     post {
         always {
-            script {
-                def hasReports = fileExists('target/surefire-reports')
-                if (hasReports) {
-                    junit 'target/surefire-reports/*.xml'
-                } else {
-                    echo "No test reports found to archive."
-                }
-            }
+            // Clean up workspace if needed
+            deleteDir() // Optional - only if you want fresh workspace each time
         }
         success {
             echo "✅ Pipeline executed successfully!"
+            // Optional: Add notification (email, Slack, etc.)
         }
         failure {
             echo "❌ Pipeline failed!"
+            // Optional: Add failure notification
         }
     }
 }

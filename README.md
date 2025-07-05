@@ -1,51 +1,159 @@
-# DevOps Bootcamp Projects
+To properly configure your SonarQube UI to work with your Jenkins pipeline and quality gates, follow these steps:
+
+1. Configure Project Settings
+Go to your project in SonarQube (http://sonarqube.mitechnology.org:9000/dashboard?id=ezlearn)
+
+Create it manually:
+
+Go to Quality Gates (top menu)
+
+Click Create
+
+Name it "eclean-prod-quality-gate"
+
+Add these conditions (as per your requirements):
+
+Coverage < 80%
+
+Duplicated Lines > 3%
+
+Maintainability Rating worse than A
+
+Reliability Rating worse than A
+
+Security Hotspots Reviewed < 100%
+
+Security Rating worse than A
+
+4. Set as Default (Optional)
+In Quality Gates page
+
+Click the three dots next to your quality gate
+
+Select Set as Default
+
+Click on Project Settings (gear icon in top-right)
+
+2. Assign Quality Gate
+Go to your project ("ezlearn")
+
+Click Project Settings (gear icon)
+
+Select Quality Gate
+
+Choose "Always use a specific Quality Gate"
+
+Select "eclean-prod-quality-gate" from dropdown
 
 
-# Jenkins Pipeline Setup and Application Deployment
 
-This guide walks you through the full setup of a CI/CD pipeline using Jenkins to build, test, analyze, publish, and deploy a Java web application. This is written for absolute beginners in DevOps.
+Click Save
 
----
+3. Configure Quality Profile
+Go to Quality Profiles (top menu)
 
-## 📦 Prerequisites
+Select Java language
 
-Before you begin, ensure you have:
+Find and set your preferred profile (likely "Sonar way" or custom one)
 
-- A running **Jenkins server** with at least 1 build node (agent).
-- Jenkins node label: `infra-build-node`
-- Jenkins credentials set up:
-  - **SSH Key** to access the deployment server (`ssh-agent-key`)
-  - **Username/Password** to push artifacts to Nexus (`nexus-creds`)
-- Access to:
-  - **SonarQube** (e.g. http://sonarqube.mitechnology.org:9000)
-  - **Nexus** (e.g. http://nexus.mitechnology.org:8081)
-  - **Tomcat Server** deployed at (e.g. http://tomcat.mitechnology.org:8080)
-- A `GitHub` repository with a branch called `app-release`
-- Java 17 and Maven installed on the Jenkins agent
+Click Set as Default if needed
 
----
+4. Set Up Security Hotspots Review
+Go to Security Hotspots tab in your project
 
-## 🚀 Step 1: Create Jenkins Pipeline Job
+Review all findings and mark them as:
 
-1. Login to Jenkins.
-2. Click on **"New Item"**.
-3. Name the job `app-deploy`.
-4. Choose **"Pipeline"** and click OK.
-5. Scroll down to **Pipeline** section:
-   - Definition: `Pipeline script from SCM`
-   - SCM: `Git`
-   - Repository URL: Your GitHub repo
-   - Branch: `app-release`
-   - Script Path: `Jenkinsfile` (assuming it is in the root of the repo)
-6. Click **Save**.
+Reviewed (if acceptable)
 
----
+Fixed (if you've addressed them)
 
-## 🔧 Jenkinsfile Explained (Step-by-Step)
+5. Configure Exclusions (Optional)
+In Project Settings → Analysis Scope
 
-The Jenkinsfile defines the automated pipeline process. Here's what each stage does:
+Add exclusions if needed (e.g., generated code):
 
-### 🧠 Agent
+**/generated/**
 
-```groovy
-agent { label 'infra-build-node' }
+**/test/** (if you don't want test code analyzed)
+
+6. Set Up Webhooks (Recommended)
+Go to Administration → Configuration → Webhooks
+
+Add webhook for Jenkins:
+
+Name: Jenkins CI
+
+URL: https://your-jenkins-url/sonarqube-webhook/
+
+Secret: [Add if secured]
+
+7. Verify Analysis Parameters
+In Project Settings → General Settings
+
+Ensure these parameters are set:
+
+sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+sonar.java.binaries=target/classes
+
+sonar.sources=src/main/java
+
+8. Check Permissions
+Go to Project Settings → Permissions
+
+Ensure:
+
+Jenkins service account has Execute Analysis permission
+
+Your team has appropriate access
+
+9. Configure Duplication Settings
+Go to Administration → General Settings → Duplications
+
+Verify "Minimum tokens" is set to 100 (default)
+
+10. Set Up Notifications (Optional)
+Go to Administration → Configuration → Notifications
+
+Add email/Slack notifications for:
+
+Quality Gate changes
+
+New issues
+
+11. Verify Quality Gate Conditions
+Go to Quality Gates (top menu)
+
+Click on "eclean-prod-quality-gate"
+
+Verify all required conditions are present (as shown in your screenshot)
+
+12. Configure Branch Analysis (If Using Branches)
+Go to Project Settings → Branches
+
+Set up branch analysis strategy:
+
+Main branch: main or master
+
+Branch type: Long-lived branches
+
+Important Checks:
+Ensure your quality gate conditions match your requirements:
+
+Coverage ≥ 80%
+
+Duplications ≤ 3%
+
+Security Hotspots reviewed = 100%
+
+No new vulnerabilities/bugs
+
+After configuration:
+
+Run your Jenkins pipeline
+
+Monitor the SonarQube project dashboard for results
+
+Check the Quality Gate status on the project homepage
+
+This configuration will ensure your SonarQube analysis properly enforces your quality standards through the Jenkins pipeline. The quality gate will now fail if any of your conditions aren't met (like the current 0% coverage and 0% security review status).
