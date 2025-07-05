@@ -1,22 +1,32 @@
 package com.ezlearn.services;
 
+import com.ezlearn.models.Course;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import com.ezlearn.models.Course;
 
+/**
+ * Service for managing courses.
+ */
 @Service
 public class CourseService {
     
+    /**
+     * Gets all available courses.
+     * @return List of courses
+     */
     public List<Course> getAllCourses() {
-        // Implementation logic here
         return List.of(
-            new Course("Java Fundamentals", "JAVA-101"),
-            new Course("Spring Boot", "SPRING-201")
+            new Course("JAVA-101", "Java Fundamentals"),
+            new Course("SPRING-201", "Spring Boot")
         );
     }
 
+    /**
+     * Gets a course by its ID.
+     * @param courseId The course ID to find
+     * @return The matching course
+     */
     public Course getCourseById(String courseId) {
-        // Implementation logic here
-        return new Course("Sample Course", courseId);
+        return new Course(courseId, "Sample Course");
     }
 }
