@@ -5,7 +5,7 @@ pipeline {
         SONARQUBE_SERVER = 'SonarQube'
         NEXUS_URL = 'http://nexus.mitechnology.org:8081'
         NEXUS_REPO = 'ezlearn-release'
-        DEPLOY_SERVER = 'ubuntu@184.72.200.252'
+        DEPLOY_SERVER = 'ubuntu@52.207.238.92'
         DEPLOY_PATH = '/opt/tomcat/webapps'
         VERSION = '1.0.0'
         SONAR_JACOCO_REPORT_PATH = 'target/site/jacoco/jacoco.xml'
