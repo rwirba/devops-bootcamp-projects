@@ -26,7 +26,7 @@ public class CourseService {
      * @param courseId The course ID to find
      * @return The matching course
      */
-    public Course getCourseById(String courseId) {
+    public Course getCourseById(final String courseId) {
         return new Course(courseId, "Sample Course");
     }
 }

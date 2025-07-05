@@ -28,12 +28,12 @@ public class Course {
 
     /**
      * Constructor for basic course information.
-     * @param id The course ID
-     * @param title The course title
+     * @param courseId The course ID
+     * @param courseTitle The course title
      */
-    public Course(String id, String title) {
-        this.id = id;
-        this.title = title;
+    public Course(final String courseId, final String courseTitle) {
+        this.id = courseId;
+        this.title = courseTitle;
         this.description = "";
         this.durationHours = 0;
         this.published = false;
@@ -41,37 +41,72 @@ public class Course {
 
     /**
      * Full constructor for all course fields.
-     * @param id The course ID
-     * @param title The course title
-     * @param description The course description
-     * @param durationHours The duration in hours
-     * @param published The publication status
+     * @param courseId The course ID
+     * @param courseTitle The course title
+     * @param courseDescription The course description
+     * @param hoursDuration The duration in hours
+     * @param publishStatus The publication status
      */
-    public Course(String id, String title, String description, 
-                 int durationHours, boolean published) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.durationHours = durationHours;
-        this.published = published;
+    public Course(final String courseId, 
+                 final String courseTitle, 
+                 final String courseDescription,
+                 final int hoursDuration,
+                 final boolean publishStatus) {
+        this.id = courseId;
+        this.title = courseTitle;
+        this.description = courseDescription;
+        this.durationHours = hoursDuration;
+        this.published = publishStatus;
     }
 
-    // Getters and setters with Javadoc comments
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public int getDurationHours() { return durationHours; }
-    public void setDurationHours(int durationHours) { this.durationHours = durationHours; }
-    public boolean isPublished() { return published; }
-    public void setPublished(boolean published) { this.published = published; }
+    public String getId() { 
+        return id; 
+    }
+
+    public void setId(final String courseId) { 
+        this.id = courseId; 
+    }
+
+    public String getTitle() { 
+        return title; 
+    }
+
+    public void setTitle(final String courseTitle) { 
+        this.title = courseTitle; 
+    }
+
+    public String getDescription() { 
+        return description; 
+    }
+
+    public void setDescription(final String courseDescription) { 
+        this.description = courseDescription; 
+    }
+
+    public int getDurationHours() { 
+        return durationHours; 
+    }
+
+    public void setDurationHours(final int hoursDuration) { 
+        this.durationHours = hoursDuration; 
+    }
+
+    public boolean isPublished() { 
+        return published; 
+    }
+
+    public void setPublished(final boolean publishStatus) { 
+        this.published = publishStatus; 
+    }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Course course = (Course) o;
         return Objects.equals(id, course.id);
     }
@@ -83,9 +118,12 @@ public class Course {
 
     @Override
     public String toString() {
-        return "Course{" +
-                "id='" + id + '\'' +
-                ", title='" + title + '\'' +
-                '}';
+        return "Course{"
+                + "id='" + id + '\''
+                + ", title='" + title + '\''
+                + ", description='" + description + '\''
+                + ", durationHours=" + durationHours
+                + ", published=" + published
+                + '}';
     }
 }
