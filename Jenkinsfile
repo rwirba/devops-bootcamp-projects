@@ -6,17 +6,17 @@ pipeline {
   }
 
   stages {
-    stage('Install Required Packages') {
+    stage('Install aws-cli on slave') {
       steps {
         sh '''
-          sudo apt update -y
           sudo apt install -y python3-pip awscli jq
           pip3 install --upgrade boto3 botocore
           ansible-galaxy collection install amazon.aws --force
-        '''
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt install -y nodejs
+        '''  
       }
     }
-
     stage('Provision Infrastructure') {
       steps {
         sshagent(credentials: ['ssh-agent-key']) {
@@ -28,7 +28,7 @@ pipeline {
             )
           ]) {
             sh '''
-              ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml
+              ansible-playbook -i inventory/prod/aws_ec2.yml playbooks/site.yml 
             '''
           }
         }

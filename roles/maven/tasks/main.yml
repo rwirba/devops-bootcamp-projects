@@ -1,45 +1,37 @@
-# roles/maven_install/tasks/main.yml
 ---
-- name: Install prerequisite packages
+- name: Update apt cache
   ansible.builtin.apt:
     update_cache: yes
-    pkg:
-      - wget
-      - ca-certificates
-      - curl
-      - gnupg
-      - lsb-release
 
-- name: Download Apache Maven 3.8.9
-  ansible.builtin.get_url:
-    url: https://mirrors.estointernet.in/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.8.9-bin.tar.gz
-    dest: /tmp/apache-maven-3.8.9-bin.tar.gz
-    
-- name: Extract Maven to /opt
-  ansible.builtin.unarchive:
-    src: /tmp/apache-maven-3.8.9-bin.tar.gz
-    dest: /opt
-    remote_src: yes
-    extra_opts: ["--strip-components=1"]
-    creates: /opt/maven/bin/mvn
+- name: Install Maven
+  ansible.builtin.apt:
+    name: maven
+    state: present
 
-- name: Create /opt/maven symlink
-  ansible.builtin.file:
-    src: /opt/apache-maven-3.8.9
-    dest: /opt/maven
-    state: link
-    force: yes
+- name: Set Maven environment variables
+  ansible.builtin.blockinfile:
+    path: /etc/environment
+    block: |
+      MAVEN_HOME=/usr/share/maven
+      M2_HOME=/usr/share/maven
+      PATH=/usr/share/maven/bin:$PATH
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - MAVEN"
 
-- name: Configure Maven environment
+- name: Create profile.d script
   ansible.builtin.copy:
     dest: /etc/profile.d/maven.sh
     content: |
-      export M2_HOME=/opt/maven
-      export MAVEN_HOME=/opt/maven
-      export PATH=$PATH:/opt/maven/bin
-    mode: 0644
+      #!/bin/sh
+      export MAVEN_HOME=/usr/share/maven
+      export M2_HOME=/usr/share/maven
+      export PATH=/usr/share/maven/bin:$PATH
+    mode: '0755'
 
-- name: Clean up downloaded tarball
-  ansible.builtin.file:
-    path: /tmp/apache-maven-3.8.9-bin.tar.gz
-    state: absent
+- name: Verify Maven installation
+  ansible.builtin.command: mvn --version
+  register: maven_version
+  changed_when: false
+
+- name: Show Maven version
+  ansible.builtin.debug:
+    var: maven_version.stdout_lines
