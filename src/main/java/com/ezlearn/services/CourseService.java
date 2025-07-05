@@ -1,18 +1,22 @@
 package com.ezlearn.services;
 
-import org.junit.jupiter.api.Assertions;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import com.ezlearn.models.Course;
 
 @Service
 public class CourseService {
     
-    public String getCourseDetails(String courseId) {
-        // Implementation here
-        return "Course details for " + courseId;
+    public List<Course> getAllCourses() {
+        // Implementation logic here
+        return List.of(
+            new Course("Java Fundamentals", "JAVA-101"),
+            new Course("Spring Boot", "SPRING-201")
+        );
     }
-    
-    // Example testable method
-    public int calculateTotalLessons(int modules, int lessonsPerModule) {
-        return modules * lessonsPerModule;
+
+    public Course getCourseById(String courseId) {
+        // Implementation logic here
+        return new Course("Sample Course", courseId);
     }
 }
