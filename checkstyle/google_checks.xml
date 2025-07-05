@@ -35,11 +35,11 @@
     <module name="UnusedImports"/>
 
     <!-- Javadoc -->
-    <module name="JavadocMethod">
+    <module name="JavadocMethod"/>
     <module name="JavadocType"/>
     <module name="JavadocVariable"/>
 
-    <!-- Other modules remain unchanged -->
+    <!-- General Code Rules -->
     <module name="EmptyBlock"/>
     <module name="EmptyStatement"/>
     <module name="EqualsHashCode"/>
