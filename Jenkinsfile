@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm  // This uses the branch that triggered the build
+                checkout scm
             }
         }
 
@@ -26,11 +26,8 @@ pipeline {
 
         stage('Static Analysis') {
             steps {
-                sh 'mvn checkstyle:checkstyle'
-                recordIssues(
-                    tools: [checkStyle(pattern: 'target/checkstyle-result.xml')],
-                    qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]]
-                )
+                sh 'mvn checkstyle:check'
+                recordIssues tools: [checkStyle(pattern: 'target/checkstyle-result.xml')]
             }
         }
 
@@ -38,7 +35,7 @@ pipeline {
             steps {
                 sh 'mvn test jacoco:report'
                 junit 'target/surefire-reports/**/*.xml'
-                archiveArtifacts artifacts: 'target/site/jacoco/**/*.xml'
+                archiveArtifacts artifacts: 'target/site/jacoco/**/*.xml', allowEmptyArchive: true
             }
         }
 
@@ -89,19 +86,19 @@ pipeline {
                         usernameVariable: 'NEXUS_USER',
                         passwordVariable: 'NEXUS_PASS'
                     )]) {
-                        def mvnCmd = "mvn deploy:deploy-file" +
-                                    " -DgroupId=com.ezlearn" +
-                                    " -DartifactId=ezlearn" +
-                                    " -Dversion=${timestamp}" +
-                                    " -Dpackaging=war" +
-                                    " -Dfile=${warPath}" +
-                                    " -DrepositoryId=ezlearn-release" +
-                                    " -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/" +
-                                    " -DgeneratePom=true" +
-                                    " --settings jenkins/settings.xml"
-
-                        sh mvnCmd
-                    }    
+                        sh """
+                            mvn deploy:deploy-file \
+                              -DgroupId=com.ezlearn \
+                              -DartifactId=ezlearn \
+                              -Dversion=${timestamp} \
+                              -Dpackaging=war \
+                              -Dfile=${warPath} \
+                              -DrepositoryId=ezlearn-release \
+                              -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
+                              -DgeneratePom=true \
+                              --settings jenkins/settings.xml
+                        """
+                    }
                 }
             }
         }
@@ -109,11 +106,11 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 sshagent (credentials: ['ssh-agent-key']) {
-                   sh """  
-                        scp target/ezlearn.war target/ROOT.war
+                    sh """
+                        cp target/ezlearn.war target/ROOT.war
                         scp -o StrictHostKeyChecking=no target/ROOT.war ${DEPLOY_SERVER}:/tmp/ROOT.war
                         ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} 'sudo mv /tmp/ROOT.war ${DEPLOY_PATH}/ROOT.war && sudo chown tomcat:tomcat ${DEPLOY_PATH}/ROOT.war'
-                    """    
+                    """
                 }
             }
         }
@@ -124,9 +121,9 @@ pipeline {
             cleanWs()
             script {
                 if (currentBuild.result == 'UNSTABLE') {
-                    echo "Build unstable due to quality warnings"
+                    echo "⚠️ Build unstable due to quality gate warnings."
                 } else if (currentBuild.result == 'FAILURE') {
-                    echo "Build failed!"
+                    echo "❌ Build failed!"
                 } else {
                     echo "✅ Pipeline executed successfully!"
                 }
