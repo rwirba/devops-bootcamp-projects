@@ -9,52 +9,55 @@ pipeline {
         DEPLOY_PATH = '/opt/tomcat/webapps'
         VERSION = '1.0.0'
         SONAR_JACOCO_REPORT_PATH = 'target/site/jacoco/jacoco.xml'
+        MAVEN_OPTS = '-Xmx1024m -XX:MaxPermSize=512m'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [[$class: 'LocalBranch']],
+                    userRemoteConfigs: [[url: 'https://github.com/rwirba/devops-bootcamp-projects.git']]
+                ])
             }
         }
 
-        stage('Build') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
-
-        stage('Static Analysis') {
-            steps {
-                script {
-                    // Run Checkstyle but don't fail the build yet
-                    def checkstyleResult = sh(
-                        script: 'mvn checkstyle:check',
-                        returnStatus: true
-                    )
-                    
-                    // Archive results regardless of failures
-                    archiveArtifacts artifacts: 'target/checkstyle-result.xml', allowEmptyArchive: true
-                    
-                    // Record issues in Jenkins UI
-                    recordIssues(
-                        tools: [checkStyle(pattern: 'target/checkstyle-result.xml')],
-                        qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]]
-                    )
-                    
-                    // Only fail if we have critical errors (configured in checkstyle.xml)
-                    if (checkstyleResult != 0) {
-                        unstable "Checkstyle violations found (${checkstyleResult} errors)"
+        stage('Build & Quality Checks') {
+            parallel {
+                stage('Build') {
+                    steps {
+                        sh 'mvn clean compile'
+                    }
+                }
+                stage('Static Analysis') {
+                    steps {
+                        sh 'mvn checkstyle:checkstyle'
+                        recordIssues(
+                            tools: [checkStyle(pattern: 'target/checkstyle-result.xml')],
+                            qualityGates: [[threshold: 1, type: 'TOTAL_ERROR', unstable: true]]
+                        )
                     }
                 }
             }
         }
 
-        stage('Unit Test & Coverage') {
+        stage('Test & Coverage') {
             steps {
                 sh 'mvn test jacoco:report'
                 junit 'target/surefire-reports/**/*.xml'
-                archiveArtifacts artifacts: 'target/site/jacoco/**/*'
+                archiveArtifacts artifacts: 'target/site/jacoco/**/*.xml'
+            }
+            post {
+                always {
+                    jacoco(
+                        execPattern: 'target/jacoco.exec',
+                        classPattern: 'target/classes',
+                        sourcePattern: 'src/main/java',
+                        exclusionPattern: 'src/test*'
+                    )
+                }
             }
         }
 
@@ -68,68 +71,62 @@ pipeline {
                           -Dsonar.qualitygate.wait=true \
                           -Dsonar.coverage.jacoco.xmlReportPaths=${SONAR_JACOCO_REPORT_PATH} \
                           -Dsonar.java.binaries=target/classes \
-                          -Dsonar.sources=src/main/java
+                          -Dsonar.sources=src/main/java \
+                          -Dsonar.tests=src/test/java \
+                          -Dsonar.junit.reportPaths=target/surefire-reports
                     """
                 }
             }
         }
 
-        stage('Quality Gate Check') {
+        stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'HOURS') {
+                timeout(time: 15, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Package WAR') {
+        stage('Build & Deploy Artifact') {
             steps {
-                sh '''
-                    mvn package
-                    cp target/ezlearn-${VERSION}.war target/ezlearn.war
-                '''
+                sh 'mvn package'
+                archiveArtifacts artifacts: 'target/*.war', fingerprint: true
             }
         }
 
         stage('Publish to Nexus') {
             steps {
-                script {
-                    def timestamp = sh(script: "date +%Y%m%d%H%M%S", returnStdout: true).trim()
-                    def warName = "ezlearn-${timestamp}.war"
-                    def warPath = "target/${warName}"
-
-                    sh "cp target/ezlearn.war ${warPath}"
-
-                    withCredentials([usernamePassword(
-                        credentialsId: 'nexus-creds',
-                        usernameVariable: 'NEXUS_USER',
-                        passwordVariable: 'NEXUS_PASS'
-                    )]) {
-                        def mvnCmd = "mvn deploy:deploy-file" +
-                                    " -DgroupId=com.ezlearn" +
-                                    " -DartifactId=ezlearn" +
-                                    " -Dversion=${timestamp}" +
-                                    " -Dpackaging=war" +
-                                    " -Dfile=${warPath}" +
-                                    " -DrepositoryId=ezlearn-release" +
-                                    " -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/" +
-                                    " -DgeneratePom=true" +
-                                    " --settings jenkins/settings.xml"
-
-                        sh mvnCmd
-                    }    
-                }
+                nexusArtifactUploader(
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: "${NEXUS_URL}",
+                    groupId: 'com.ezlearn',
+                    version: "${env.BUILD_ID}",
+                    repository: "${NEXUS_REPO}",
+                    credentialsId: 'nexus-creds',
+                    artifacts: [
+                        [artifactId: 'ezlearn',
+                         classifier: '',
+                         file: 'target/ezlearn.war',
+                         type: 'war']
+                    ]
+                )
             }
         }
 
         stage('Deploy to Tomcat') {
             steps {
-                sshagent (credentials: ['ssh-agent-key']) {
-                   sh """  
-                        scp target/ezlearn.war target/ROOT.war
-                        scp -o StrictHostKeyChecking=no target/ROOT.war ${DEPLOY_SERVER}:/tmp/ROOT.war
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} 'sudo mv /tmp/ROOT.war ${DEPLOY_PATH}/ROOT.war && sudo chown tomcat:tomcat ${DEPLOY_PATH}/ROOT.war'
-                    """    
+                sshagent(['ssh-agent-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} \
+                            "sudo systemctl stop tomcat && \
+                             sudo rm -rf ${DEPLOY_PATH}/ROOT*"
+                        scp -o StrictHostKeyChecking=no target/ezlearn.war \
+                            ${DEPLOY_SERVER}:${DEPLOY_PATH}/ROOT.war
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} \
+                            "sudo chown tomcat:tomcat ${DEPLOY_PATH}/ROOT.war && \
+                             sudo systemctl start tomcat"
+                    """
                 }
             }
         }
@@ -139,15 +136,23 @@ pipeline {
         always {
             cleanWs()
             script {
-                // Final build status notification
-                if (currentBuild.result == 'UNSTABLE') {
-                    echo "Build unstable due to quality warnings"
-                    // Add notification (Slack/Email) here if needed
-                } else if (currentBuild.result == 'FAILURE') {
-                    echo "Build failed!"
-                    // Add failure notification here if needed
+                def subject = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}"
+                def details = """Check console output at ${env.BUILD_URL}console"""
+                
+                if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
+                    emailext(
+                        subject: subject,
+                        body: details,
+                        to: 'dev-team@yourcompany.com',
+                        attachLog: true
+                    )
                 } else {
-                    echo "Build succeeded!"
+                    emailext(
+                        subject: subject,
+                        body: details,
+                        to: 'dev-team+alerts@yourcompany.com',
+                        attachLog: true
+                    )
                 }
             }
         }
