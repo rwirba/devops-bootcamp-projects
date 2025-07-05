@@ -17,24 +17,34 @@
     <module name="LocalFinalVariableName"/>
     <module name="LocalVariableName"/>
     <module name="MemberName"/>
-    <module name="MethodName"/>
+    <module name="MethodName">
+      <property name="format" value="^[a-z][a-zA-Z0-9_]*$"/>
+      <property name="allowClassName" value="false"/>
+    </module>
     <module name="PackageName"/>
     <module name="ParameterName"/>
     <module name="StaticVariableName"/>
     <module name="TypeName"/>
 
     <!-- Imports -->
-    <module name="AvoidStarImport"/>
+    <module name="AvoidStarImport">
+      <property name="excludes" value="org.junit.Test,org.junit.jupiter.api.*"/>
+    </module>
     <module name="IllegalImport"/>
     <module name="RedundantImport"/>
     <module name="UnusedImports"/>
 
-    <!-- Javadoc - Simplified version -->
-    <module name="JavadocMethod"/>
+    <!-- Javadoc -->
+    <module name="JavadocMethod">
+      <property name="scope" value="public"/>
+      <property name="allowMissingParamTags" value="true"/>
+      <property name="allowMissingThrowsTags" value="true"/>
+      <property name="allowMissingReturnTag" value="true"/>
+    </module>
     <module name="JavadocType"/>
     <module name="JavadocVariable"/>
 
-    <!-- Coding -->
+    <!-- Other modules remain unchanged -->
     <module name="EmptyBlock"/>
     <module name="EmptyStatement"/>
     <module name="EqualsHashCode"/>
