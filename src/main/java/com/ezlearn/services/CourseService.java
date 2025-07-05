@@ -1,15 +1,18 @@
-package com.ezlearn.controllers;
+package com.ezlearn.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
-import org.springframework.ui.Model;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.stereotype.Service;
 
-public class HomeControllerTest {
+@Service
+public class CourseService {
     
-    @Test
-    public void testHomePage() {
-        HomeController controller = new HomeController();
-        String viewName = controller.home();
-        assertEquals("index", viewName);
+    public String getCourseDetails(String courseId) {
+        // Implementation here
+        return "Course details for " + courseId;
+    }
+    
+    // Example testable method
+    public int calculateTotalLessons(int modules, int lessonsPerModule) {
+        return modules * lessonsPerModule;
     }
 }

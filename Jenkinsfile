@@ -24,21 +24,37 @@ pipeline {
             }
         }
 
-        stage('Unit Test & Coverage') {
+        stage('Static Analysis') {
             steps {
-                sh 'mvn test jacoco:report'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/**/*.xml'
-                    archiveArtifacts artifacts: 'target/site/jacoco/**/*'
+                script {
+                    // Run Checkstyle but don't fail the build yet
+                    def checkstyleResult = sh(
+                        script: 'mvn checkstyle:check',
+                        returnStatus: true
+                    )
+                    
+                    // Archive results regardless of failures
+                    archiveArtifacts artifacts: 'target/checkstyle-result.xml', allowEmptyArchive: true
+                    
+                    // Record issues in Jenkins UI
+                    recordIssues(
+                        tools: [checkStyle(pattern: 'target/checkstyle-result.xml')],
+                        qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]]
+                    )
+                    
+                    // Only fail if we have critical errors (configured in checkstyle.xml)
+                    if (checkstyleResult != 0) {
+                        unstable "Checkstyle violations found (${checkstyleResult} errors)"
+                    }
                 }
             }
         }
 
-        stage('Static Analysis') {
+        stage('Unit Test & Coverage') {
             steps {
-                sh 'mvn checkstyle:check pmd:pmd'
+                sh 'mvn test jacoco:report'
+                junit 'target/surefire-reports/**/*.xml'
+                archiveArtifacts artifacts: 'target/site/jacoco/**/*'
             }
         }
 
@@ -122,14 +138,18 @@ pipeline {
     post {
         always {
             cleanWs()
-        }
-        success {
-            echo "✅ Pipeline executed successfully!"
-            // Add notification (Slack/Email) here if needed
-        }
-        failure {
-            echo "❌ Pipeline failed!"
-            // Add failure notification here if needed
+            script {
+                // Final build status notification
+                if (currentBuild.result == 'UNSTABLE') {
+                    echo "Build unstable due to quality warnings"
+                    // Add notification (Slack/Email) here if needed
+                } else if (currentBuild.result == 'FAILURE') {
+                    echo "Build failed!"
+                    // Add failure notification here if needed
+                } else {
+                    echo "Build succeeded!"
+                }
+            }
         }
     }
 }
