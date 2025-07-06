@@ -281,7 +281,7 @@ After successful execution:
 ### Generate Access Token
 1. Access SonarQube dashboard:
 
-http://<sonarqube-server-ip>:9000
+http://sonarqube_instance_ip:9000
    - Default credentials: `admin`/`admin`
 
 2. Navigate to:
