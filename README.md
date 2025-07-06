@@ -281,7 +281,7 @@ After successful execution:
 ### Generate Access Token
 1. Access SonarQube dashboard:
 
-http://<sonarqube-server-ip>:9000
+http://sonarqube_instance_ip:9000
    - Default credentials: `admin`/`admin`
 
 2. Navigate to:
@@ -310,9 +310,9 @@ http://<nexus-server-ip>:8081
 
 | Repository Name   | Type    | Version Policy | Blob Store |
 |-------------------|---------|----------------|------------|
-| `maven-releases`  | hosted  | Release        | default    |
-| `maven-snapshots` | hosted  | Snapshot       | default    |
-| `maven-public`    | group   | -              | default    |
+| `ezlearn-releases`  | hosted  | Release        | default    |
+| `ezlearn-snapshots` | hosted  | Snapshot       | default    |
+| `ezlearn-public`    | group   | -              | default    |
 
 3. For the group repository (`maven-public`):
 - Add both `maven-releases` and `maven-snapshots` as members
