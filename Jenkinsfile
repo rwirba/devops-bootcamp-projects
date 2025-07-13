@@ -19,7 +19,9 @@ pipeline {
             )
           ]) {
             sh '''
-              ansible-playbook -i inventory/aws_ec2.yml install_one_agent.yml
+              ansible-playbook -i inventory/aws_ec2.yml install_one_agent.yml \
+              -e "dynatrace_api_token=${DYNATRACE_API_TOKEN}" \
+              -e "dynatrace_env_url=${DYNATRACE_ENV_URL}"
             '''
           }
         }
