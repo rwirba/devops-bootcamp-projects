@@ -1,0 +1,6 @@
+---
+dynatrace_api_token: ""
+dynatrace_env_url: ""
+dynatrace_arch: "x86"
+dynatrace_mode: "fullstack"
+dynatrace_installer: "/tmp/Dynatrace-OneAgent.sh"
