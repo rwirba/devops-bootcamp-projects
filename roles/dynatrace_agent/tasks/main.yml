@@ -15,12 +15,8 @@
     mode: '0644'
 
 - name: Verify installer signature
-  shell: |
-    echo 'Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg=sha-256; boundary="--SIGNED-INSTALLER"'
-    echo
-    echo '----SIGNED-INSTALLER'
-    cat {{ dynatrace_installer }}
-    | openssl cms -verify -CAfile /tmp/dt-root.cert.pem > /dev/null
+  shell: >
+    /bin/sh {{ dynatrace_installer }} --verify-only
   register: verify_result
   failed_when: verify_result.rc != 0
   changed_when: false
