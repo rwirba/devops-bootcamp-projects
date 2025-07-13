@@ -8,19 +8,6 @@
     mode: '0755'
     force: yes
 
-- name: Download Dynatrace root cert
-  get_url:
-    url: "https://ca.dynatrace.com/dt-root.cert.pem"
-    dest: "/tmp/dt-root.cert.pem"
-    mode: '0644'
-
-- name: Verify installer signature
-  shell: >
-    /bin/sh {{ dynatrace_installer }} --verify-only
-  register: verify_result
-  failed_when: verify_result.rc != 0
-  changed_when: false
-
 - name: Run the Dynatrace OneAgent installer
   shell: >
     /bin/sh {{ dynatrace_installer }}
