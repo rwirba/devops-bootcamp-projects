@@ -1,161 +1,187 @@
-To properly configure your SonarQube UI to work with your Jenkins pipeline and quality gates, follow these steps:
+# SonarQube Integration with Jenkins for `ezlearn` Project
 
-Install warning plugin in jenkins
+This guide documents the full configuration of SonarQube to enforce code quality standards through Jenkins pipelines for the `ezlearn` project. It includes setting up a custom quality gate, assigning it to the project, configuring analysis parameters, and ensuring compliance with security and coverage requirements.
 
-1. Configure Project Settings
-Go to your project in SonarQube (http://sonarqube.mitechnology.org:9000/dashboard?id=ezlearn)
+---
 
-Create it manually:
+## 🌐 SonarQube URL
+> [http://sonarqube.mitechnology.org:9000/dashboard?id=ezlearn](http://sonarqube.mitechnology.org:9000/dashboard?id=ezlearn)
 
-Go to Quality Gates (top menu)
+---
 
-Click Create
+## 🔧 Prerequisites
 
-Name it "eclean-prod-quality-gate"
+- Jenkins is up and running.
+- SonarQube is installed and accessible.
+- SonarQube scanner is integrated with Jenkins.
+- Jenkins has the **Warnings Next Generation** plugin installed.
 
-Add these conditions (as per your requirements):
+---
 
-Coverage < 80%
+## 🛠️ Step-by-Step Configuration
 
-Duplicated Lines > 3%
+### Step 1: Create Custom Quality Gate
 
-Maintainability Rating worse than A
+- Navigate to **Quality Gates** in SonarQube.
+- Click **Create** and name it:  
+  `eclean-prod-quality-gate`
+- Add the following conditions:
+  - **Coverage** < `80%`
+  - **Duplicated Lines (%)** > `3%`
+  - **Maintainability Rating** worse than `A`
+  - **Reliability Rating** worse than `A`
+  - **Security Rating** worse than `A`
+  - **Security Hotspots Reviewed** < `100%`
 
-Reliability Rating worse than A
+**Optional:**  
+Click the 3-dots beside your new gate → Select **Set as Default**
 
-Security Hotspots Reviewed < 100%
+---
 
-Security Rating worse than A
+### Step 2: Assign Quality Gate to the Project
 
-4. Set as Default (Optional)
-In Quality Gates page
+- Go to the project `ezlearn`
+- Click **Project Settings (gear icon)**
+- Select **Quality Gate**
+- Choose: `Always use a specific Quality Gate`
+- Select: `eclean-prod-quality-gate`
+- Click **Save**
 
-Click the three dots next to your quality gate
+---
 
-Select Set as Default
+### Step 3: Configure Quality Profile
 
-Click on Project Settings (gear icon in top-right)
+- Go to **Quality Profiles**
+- Select **Java**
+- Choose a profile like **Sonar way** or a custom one
+- Click **Set as Default** if required
 
-2. Assign Quality Gate
-Go to your project ("ezlearn")
+---
 
-Click Project Settings (gear icon)
+### Step 4: Set Up Security Hotspots Review
 
-Select Quality Gate
+- Navigate to **Security Hotspots** tab in your project
+- Review each hotspot and mark them as:
+  - `Reviewed` – if the issue is acceptable
+  - `Fixed` – if you addressed it
 
-Choose "Always use a specific Quality Gate"
+---
 
-Select "eclean-prod-quality-gate" from dropdown
+### Step 5: Configure Source Code Exclusions (Optional)
 
+- Go to **Project Settings → Analysis Scope**
+- Add the following paths if needed:
+  - `/generated/`
+  - `/test/`
 
+---
 
-Click Save
+### Step 6: Configure Webhooks (Jenkins Integration)
 
-3. Configure Quality Profile
-Go to Quality Profiles (top menu)
+- Go to **Administration → Configuration → Webhooks**
+- Click **Create**
+- Use the following:
+  - **Name:** `Jenkins CI`
+  - **URL:** `https://your-jenkins-url/sonarqube-webhook/`
+  - **Secret:** _(optional if secured)_
 
-Select Java language
+---
 
-Find and set your preferred profile (likely "Sonar way" or custom one)
+### Step 7: Set Analysis Parameters for Jenkins
 
-Click Set as Default if needed
+Go to **Project Settings → General Settings** and set:
 
-4. Set Up Security Hotspots Review
-Go to Security Hotspots tab in your project
-
-Review all findings and mark them as:
-
-Reviewed (if acceptable)
-
-Fixed (if you've addressed them)
-
-5. Configure Exclusions (Optional)
-In Project Settings → Analysis Scope
-
-Add exclusions if needed (e.g., generated code):
-
-**/generated/**
-
-**/test/** (if you don't want test code analyzed)
-
-6. Set Up Webhooks (Recommended)
-Go to Administration → Configuration → Webhooks
-
-Add webhook for Jenkins:
-
-Name: Jenkins CI
-
-URL: https://your-jenkins-url/sonarqube-webhook/
-
-Secret: [Add if secured]
-
-7. Verify Analysis Parameters
-In Project Settings → General Settings
-
-Ensure these parameters are set:
-
+```properties
 sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-
 sonar.java.binaries=target/classes
-
 sonar.sources=src/main/java
+```
 
-8. Check Permissions
-Go to Project Settings → Permissions
+---
 
-Ensure:
+### Step 8: Check Project Permissions
 
-Jenkins service account has Execute Analysis permission
+- Go to **Project Settings → Permissions**
+- Ensure:
+  - Jenkins service account has **Execute Analysis**
+  - Developers, QA, and other roles have proper access
 
-Your team has appropriate access
+---
 
-9. Configure Duplication Settings
-Go to Administration → General Settings → Duplications
+### Step 9: Configure Duplication Settings
 
-Verify "Minimum tokens" is set to 100 (default)
+- Go to **Administration → General Settings → Duplications**
+- Verify:
+  - **Minimum tokens** = `100` (default)
 
-10. Set Up Notifications (Optional)
-Go to Administration → Configuration → Notifications
+---
 
-Add email/Slack notifications for:
+### Step 10: Configure Notifications (Optional)
 
-Quality Gate changes
+- Go to **Administration → Configuration → Notifications**
+- Set up alerts for:
+  - Quality Gate changes
+  - New issues
+- Delivery options:
+  - Email
+  - Slack integration
 
-New issues
+---
 
-11. Verify Quality Gate Conditions
-Go to Quality Gates (top menu)
+### Step 11: Configure Branch Analysis (If Using Branches)
 
-Click on "eclean-prod-quality-gate"
+- Go to **Project Settings → Branches**
+- Ensure:
+  - **Main branch:** `main` or `master`
+  - **Branch type:** Long-lived
+  - Quality Gate applies to all branches
 
-Verify all required conditions are present (as shown in your screenshot)
+---
 
-12. Configure Branch Analysis (If Using Branches)
-Go to Project Settings → Branches
+### Step 12: Verify Quality Gate Conditions
 
-Set up branch analysis strategy:
+- Go to **Quality Gates**
+- Click on `eclean-prod-quality-gate`
+- Ensure all conditions are correctly listed:
+  - Coverage < 80%
+  - Duplicated Lines > 3%
+  - Maintainability Rating worse than A
+  - Reliability Rating worse than A
+  - Security Rating worse than A
+  - Security Hotspots Reviewed < 100%
 
-Main branch: main or master
+---
 
-Branch type: Long-lived branches
+### Step 13: Run Jenkins Pipeline and Monitor SonarQube
 
-Important Checks:
-Ensure your quality gate conditions match your requirements:
+- Trigger your Jenkins pipeline
+- Once analysis completes:
+  - Check results on [SonarQube Dashboard](http://sonarqube.mitechnology.org:9000/dashboard?id=ezlearn)
+  - Validate Quality Gate status (Passed or Failed)
+  - Ensure metrics like **Coverage**, **Duplications**, and **Security Hotspots** are displayed
 
-Coverage ≥ 80%
+---
 
-Duplications ≤ 3%
+## Quality Gate Metrics Summary
 
-Security Hotspots reviewed = 100%
+| Metric                        | Threshold      |
+|------------------------------|----------------|
+| Coverage                     | ≥ 80%          |
+| Duplicated Lines (%)         | ≤ 3%           |
+| Maintainability Rating       | A              |
+| Reliability Rating           | A              |
+| Security Rating              | A              |
+| Security Hotspots Reviewed   | 100%           |
 
-No new vulnerabilities/bugs
+---
 
-After configuration:
+## Notes
 
-Run your Jenkins pipeline
+- Ensure your `pom.xml` or Gradle script includes Jacoco configuration.
+- Use the SonarQube Jenkins plugin or CLI for integration.
+- Custom rules or thresholds can be applied per project/team needs.
 
-Monitor the SonarQube project dashboard for results
+---
 
-Check the Quality Gate status on the project homepage
-
-This configuration will ensure your SonarQube analysis properly enforces your quality standards through the Jenkins pipeline. The quality gate will now fail if any of your conditions aren't met (like the current 0% coverage and 0% security review status).
+**Maintainer:** Ryan Wirba 
+**Last Updated:** July 2025
