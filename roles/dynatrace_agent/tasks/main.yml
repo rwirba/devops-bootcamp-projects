@@ -15,3 +15,12 @@
     --set-app-log-content-access=true
   args:
     creates: /opt/dynatrace/oneagent
+
+- name: Set custom Dynatrace hostname after install
+  command: >
+    /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-name={{ inventory_hostname }}
+
+- name: Restart Dynatrace OneAgent service
+  systemd:
+    name: oneagent
+    state: restarted
