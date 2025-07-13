@@ -1,0 +1,34 @@
+---
+- name: Download Dynatrace OneAgent installer
+  get_url:
+    url: "{{ dynatrace_env_url }}/api/v1/deployment/installer/agent/unix/default/latest?arch={{ dynatrace_arch }}"
+    headers:
+      Authorization: "Api-Token {{ dynatrace_api_token }}"
+    dest: "{{ dynatrace_installer }}"
+    mode: '0755'
+    force: yes
+
+- name: Download Dynatrace root cert
+  get_url:
+    url: "https://ca.dynatrace.com/dt-root.cert.pem"
+    dest: "/tmp/dt-root.cert.pem"
+    mode: '0644'
+
+- name: Verify installer signature
+  shell: |
+    echo 'Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg=sha-256; boundary="--SIGNED-INSTALLER"'
+    echo
+    echo '----SIGNED-INSTALLER'
+    cat {{ dynatrace_installer }}
+    | openssl cms -verify -CAfile /tmp/dt-root.cert.pem > /dev/null
+  register: verify_result
+  failed_when: verify_result.rc != 0
+  changed_when: false
+
+- name: Run the Dynatrace OneAgent installer
+  shell: >
+    /bin/sh {{ dynatrace_installer }}
+    --set-monitoring-mode={{ dynatrace_mode }}
+    --set-app-log-content-access=true
+  args:
+    creates: /opt/dynatrace/oneagent
