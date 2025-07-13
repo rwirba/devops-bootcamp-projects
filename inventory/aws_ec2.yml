@@ -1,0 +1,13 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+keyed_groups:
+  - key: tags.Name  # This creates groups based on AWS 'Name' tags
+    prefix: ""      # No prefix for clean group names
+hostnames:
+  - tag:Name        # Use the 'Name' tag as the hostname
+compose:
+  ansible_host: private_ip_address  # Still connect via private IP
+filters:
+  tag:Env: prod
+  tag:Monitoring: dynatrace

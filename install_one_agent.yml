@@ -1,0 +1,6 @@
+---
+- name: Install Dynatrace OneAgent on Ubuntu EC2
+  hosts: all
+  become: true
+  roles:
+    - dynatrace_agent
