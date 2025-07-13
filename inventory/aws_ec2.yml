@@ -9,5 +9,4 @@ hostnames:
 compose:
   ansible_host: private_ip_address  # Still connect via private IP
 filters:
-  tag:Env: prod
   tag:Monitoring: dynatrace
