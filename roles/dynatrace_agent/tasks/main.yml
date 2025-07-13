@@ -18,9 +18,17 @@
 
 - name: Set custom Dynatrace hostname after install
   command: >
-    /opt/dynatrace/oneagent/agent/tools/oneagentctl --set-host-name={{ inventory_hostname }}
+    /opt/dynatrace/oneagent/agent/tools/oneagentctl
+    --set-host-name={{ inventory_hostname }}
+    --restart-service
+  register: set_hostname_result
+  failed_when: set_hostname_result.rc != 0
 
-- name: Restart Dynatrace OneAgent service
-  systemd:
-    name: oneagent
-    state: restarted
+- name: Confirm OneAgent is running
+  shell: systemctl is-active oneagent
+  register: oneagent_status
+  changed_when: false
+  failed_when: oneagent_status.stdout != "active"
+
+- debug:
+    msg: "Dynatrace OneAgent is running with hostname {{ inventory_hostname }}"
