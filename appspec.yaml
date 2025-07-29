@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: target/ezlearn.war
+    destination: /opt/tomcat/webapps/ROOT.war
+hooks:
+  BeforeInstall:
+    - location: scripts/stopServer.sh
+      timeout: 60
+      runas: root
+  AfterInstall:
+    - location: scripts/startServer.sh
+      timeout: 60
+      runas: root

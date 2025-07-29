@@ -75,9 +75,9 @@
 
     <distributionManagement>
         <repository>
-            <id>ezlearn-release</id>
-            <name>ezlearn release repository</name>
-            <url>http://nexus.mitechnology.org:8081/repository/ezlearn-release/</url>
+            <id>codeartifact</id>
+            <name>ezlearn-maven</name>
+            <url>https://ezlearn-domain-880413249926.d.codeartifact.us-east-1.amazonaws.com/maven/ezlearn-maven/</url>
         </repository>
     </distributionManagement>
 
