@@ -1,0 +1,19 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing Maven..."
+      - apt update && apt install -y maven
+  build:
+    commands:
+      - echo "Building WAR package..."
+      - mvn clean package
+  post_build:
+    commands:
+      - echo "Build complete. Preparing artifact..."
+artifacts:
+  files:
+    - target/*.war
+    - appspec.yml
+    - scripts/*
