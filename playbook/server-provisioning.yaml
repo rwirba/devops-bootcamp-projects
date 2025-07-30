@@ -112,38 +112,38 @@
     # ----------------------------------------------------
     # Install AWS CodeDeploy Agent
     # ----------------------------------------------------
-    - name: Install dependencies for CodeDeploy
-      ansible.builtin.apt:
-        name:
-          - ruby
-          - wget
-        state: present
-        update_cache: yes
+    # - name: Install dependencies for CodeDeploy
+    #   ansible.builtin.apt:
+    #     name:
+    #       - ruby
+    #       - wget
+    #     state: present
+    #     update_cache: yes
 
-    - name: Download CodeDeploy installer script
-      ansible.builtin.get_url:
-        url: "https://aws-codedeploy-{{ aws_region }}.s3.{{ aws_region }}.amazonaws.com/latest/install"
-        dest: /home/ubuntu/install
-        mode: '0755'
+    # - name: Download CodeDeploy installer script
+    #   ansible.builtin.get_url:
+    #     url: "https://aws-codedeploy-{{ aws_region }}.s3.{{ aws_region }}.amazonaws.com/latest/install"
+    #     dest: /home/ubuntu/install
+    #     mode: '0755'
 
     # - name: Run CodeDeploy installer script
     #   ansible.builtin.command: /home/ubuntu/install auto
     #   args:
     #     creates: /opt/codedeploy-agent
-    - name: Run CodeDeploy installer script (with output)
-      ansible.builtin.shell: /home/ubuntu/install auto
-      register: codedeploy_result
-      ignore_errors: true
+    # - name: Run CodeDeploy installer script (with output)
+    #   ansible.builtin.shell: /home/ubuntu/install auto
+    #   register: codedeploy_result
+    #   ignore_errors: true
 
-    - name: Print CodeDeploy output
-      debug:
-        var: codedeploy_result.stdout_lines
+    # - name: Print CodeDeploy output
+    #   debug:
+    #     var: codedeploy_result.stdout_lines
 
-    - name: Start CodeDeploy agent
-      ansible.builtin.systemd:
-        name: codedeploy-agent
-        enabled: yes
-        state: started
+    # - name: Start CodeDeploy agent
+    #   ansible.builtin.systemd:
+    #     name: codedeploy-agent
+    #     enabled: yes
+    #     state: started
 
   handlers:
     - name: Restart Tomcat
