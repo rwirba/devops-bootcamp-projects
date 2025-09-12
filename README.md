@@ -185,7 +185,7 @@ ezlearn-class/
    sudo -u jenkins mkdir -p /var/lib/jenkins/.ssh
 
    # 2. Generate key pair (will create id_rsa and id_rsa.pub)
-   sudo -u jenkins ssh-keygen -t rsa -b 4096 -f /var/lib/jenkins/.ssh/id_rsa -N ""
+   sudo -u jenkins ssh-keygen -m PEM -t rsa -b 4096 -f /var/lib/jenkins/.ssh/id_rsa -N ""
 
    # 3. Set proper permissions
    sudo chmod 700 /var/lib/jenkins/.ssh
