@@ -11,6 +11,18 @@ pipeline {
     }
 
     stages {
+        stage('Install dockeron slave') {
+          steps {
+            sh '''
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker $USER
+              newgrp docker
+            '''  
+          }
+        }
         stage('Checkout') {
             steps { checkout scm }
         }
