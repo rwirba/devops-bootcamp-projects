@@ -11,7 +11,7 @@ pipeline {
     }
 
     stages {
-        stage('Install dockeron slave') {
+        stage('Install docker on slave') {
           steps {
             sh '''
               sudo apt-get update
