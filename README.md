@@ -32,7 +32,6 @@ Fill the page exactly like this:
 Click **Create**.  
 On the repo details page, copy the **Repository URI** (looks like `123456789012.dkr.ecr.us-east-1.amazonaws.com/ezlearn-app`).
 
-> **Tip:** If your org enforces immutable tags, see the “Immutable tags (optional)” section later.
 
 ---
 
