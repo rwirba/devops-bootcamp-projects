@@ -22,7 +22,8 @@ phases:
   build:
     commands:
       - 'test -n "${WAR_URL}" || { echo "WAR_URL is required"; exit 1; }'
-      - 'IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}"'
+      # POSIX-safe 7-char tag (fallback to "manual" if no source version)
+      - 'IMAGE_TAG="$(printf "%.7s" "${CODEBUILD_RESOLVED_SOURCE_VERSION:-manual}")"'
       - 'echo "Building ${REPO_URI}:${IMAGE_TAG} and :latest with WAR_URL=${WAR_URL}"'
       - 'docker build --build-arg WAR_URL="${WAR_URL}" -t "${REPO_URI}:${IMAGE_TAG}" -t "${REPO_URI}:latest" .'
 
