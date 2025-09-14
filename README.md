@@ -14,18 +14,25 @@ This guide deploys a Tomcat 9 container to **AWS ECS (Fargate)** behind an **App
 ---
 
 ## 1) Create / Connect the GitHub repo (Console)
-1. Push this folder to GitHub (any provider works; screenshots assume GitHub).
+1. Switch ti git branch AWS-ECS in  GitHub).
 2. Confirm it contains `Dockerfile`, `buildspec.yml`, `.dockerignore`.
 
 ---
 
-## 2) Create an ECR repository (Console)
-1. Go to **Amazon ECR → Repositories → Create repository**.
-2. **Visibility**: Private  
-3. **Repository name**: `ezlearn-app` (or your chosen name)
-4. Create. Copy the repo URI shown (will look like `123456789012.dkr.ecr.us-east-1.amazonaws.com/ezlearn-app`).
+**AWS Console → ECR → Private registry → Repositories → Create repository**
 
-> You don’t need to push from your laptop — CodeBuild will do the build & push.
+Fill the page exactly like this:
+- **Repository name:** `ezlearn-app`
+- **Image tag mutability:** **Mutable** ✅  
+  (Easier walkthrough; lets CodeBuild update `:latest` on each build.)
+- **Encryption settings:** **AES-256 (default)** ✅  
+  (Choose **KMS** only if you require a CMK.)
+- **Image scanning settings:** section is **deprecated**; leave as is.
+
+Click **Create**.  
+On the repo details page, copy the **Repository URI** (looks like `123456789012.dkr.ecr.us-east-1.amazonaws.com/ezlearn-app`).
+
+> **Tip:** If your org enforces immutable tags, see the “Immutable tags (optional)” section later.
 
 ---
 
