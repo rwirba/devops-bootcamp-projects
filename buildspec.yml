@@ -1,0 +1,32 @@
+# buildspec.yml
+version: 0.2
+
+env:
+  variables:
+    # You will set/override these in the CodeBuild console
+    APP_REPO_NAME: "ezlearn-app"     # ECR repository name
+    WAR_URL: ""                      # Your Nexus WAR URL
+
+phases:
+  pre_build:
+    commands:
+      - echo "Region: $AWS_DEFAULT_REGION"
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REPO_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${APP_REPO_NAME}"
+      - echo "ECR: $REPO_URI"
+      - aws ecr describe-repositories --repository-names "$APP_REPO_NAME" || aws ecr create-repository --repository-name "$APP_REPO_NAME"
+      - aws ecr get-login-password | docker login --username AWS --password-stdin "$REPO_URI"
+  build:
+    commands:
+      - test -n "$WAR_URL" || (echo "WAR_URL is required" && exit 1)
+      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+      - echo "Building $REPO_URI:$IMAGE_TAG with WAR_URL=$WAR_URL"
+      - docker build --build-arg WAR_URL="$WAR_URL" -t "$REPO_URI:$IMAGE_TAG" -t "$REPO_URI:latest" .
+  post_build:
+    commands:
+      - docker push "$REPO_URI:$IMAGE_TAG"
+      - docker push "$REPO_URI:latest"
+      - printf '{"imageUri":"%s"}' "$REPO_URI:$IMAGE_TAG" > imageDetail.json
+artifacts:
+  files:
+    - imageDetail.json
