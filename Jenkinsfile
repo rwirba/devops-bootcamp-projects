@@ -11,7 +11,7 @@ pipeline {
     APP_IMAGE        = 'ezlearn/tomcat-app'     // change to your org/image if you wish
     CONTAINER_NAME   = 'ezlearn-app'
     APP_PORT_HOST    = '8888'                   // external port you want
-    APP_PORT_CONT    = '8082'                   // Tomcat internal port
+    APP_PORT_CONT    = '8080'                   // Tomcat internal port
   }
 
   options {
