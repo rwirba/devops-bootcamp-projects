@@ -122,6 +122,7 @@ pipeline {
       steps {
         script {
           sh """
+            set -e
             # Stop & remove any previous container
             docker rm -f ${CONTAINER_NAME} || true
 
@@ -132,11 +133,14 @@ pipeline {
 
             # Health check (up to ~60s)
             for i in {1..30}; do
-              curl -fsS http://localhost:${APP_PORT_HOST}/ >/dev/null && ok=1 && break || sleep 2
+              curl -fsS http://localhost:${APP_PORT_HOST}/ >/dev/null ; then
+              echo "App is healthy..."
+              exit 0
             done
-            if [ -z "$ok" ]; then
-              echo "❌ Health check failed"; docker logs ${CONTAINER_NAME}; exit 1
-            fi
+            echo "❌ Health check failed"
+            docker logs ${CONTAINER_NAME} || true
+
+            exit 1
           """
         }
       }
