@@ -129,7 +129,7 @@ pipeline {
 
     stage('Deploy (Recreate Container)') {
       steps {
-        sh """
+        sh '''
           set -euo pipefail
 
           # Stop & remove prior container (if any)
@@ -152,7 +152,7 @@ pipeline {
           echo "❌ Health check failed"
           docker logs ${CONTAINER_NAME} || true
           exit 1
-        """
+        '''
       }
     }
   }
