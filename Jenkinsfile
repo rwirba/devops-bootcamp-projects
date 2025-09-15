@@ -12,6 +12,7 @@ pipeline {
     CONTAINER_NAME   = 'ezlearn-app'
     APP_PORT_HOST    = '8888'                   // external port you want
     APP_PORT_CONT    = '8080'                   // Tomcat internal port
+    DOCKERHUB_IMAGE  = 'ezlearn/tomcat-app'
   }
 
   options {
@@ -110,7 +111,24 @@ pipeline {
         }
       }
     }
+    stage('Push Image to Docker Hub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+          usernameVariable: 'HUB_USER', passwordVariable: 'HUB_PASS')]) {
+          sh '''
+            echo "$HUB_PASS" | docker login -u "$HUB_USER" --password-stdin
 
+            docker tag '${APP_IMAGE}:${APP_TAG}' '${DOCKERHUB_IMAGE}:${APP_TAG}'
+            docker tag '${APP_IMAGE}:latest'     '${DOCKERHUB_IMAGE}:latest'
+
+            docker push '${DOCKERHUB_IMAGE}:${APP_TAG}'
+            docker push '${DOCKERHUB_IMAGE}:latest'
+
+            docker logout || true
+          '''
+        }
+      }
+    }
     stage('Deploy (Recreate Container)') {
       steps {
         sh '''#!/usr/bin/env bash
