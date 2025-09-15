@@ -15,7 +15,7 @@ pipeline {
   }
 
   options {
-    skipDefaultCheckout(true) 
+    skipDefaultCheckout() 
     disableConcurrentBuilds()
     // This cleans up workspace after build too
     cleanWs()
