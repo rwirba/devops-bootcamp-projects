@@ -122,15 +122,19 @@ pipeline {
             -p ${APP_PORT_HOST}:${APP_PORT_CONT} \
             ${APP_IMAGE}:${APP_TAG}
 
-          for i in {1..30}; do
-            if curl -sS -o /dev/null "http://localhost:${APP_PORT_HOST}/"; then
-                echo "✅ App reachable at http://localhost:${APP_PORT_HOST}/"
+            CONTAINER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})"
+            echo "Container IP: $CONTAINER_IP (checking http://$CONTAINER_IP:${APP_PORT_CONT}/)"
+
+            # Wait up to ~60s for app inside the container
+            for i in {1..30}; do
+            if curl -sS -o /dev/null "http://$CONTAINER_IP:${APP_PORT_CONT}/"; then
+                echo "✅ App reachable at http://$CONTAINER_IP:${APP_PORT_CONT}/"
                 exit 0
             fi
             sleep 2
             done
 
-            echo "❌ Health check failed (no TCP/HTTP response)"
+            echo "❌ Health check failed (no response on container IP/port)"
             docker logs ${CONTAINER_NAME} || true
             exit 1
         '''
