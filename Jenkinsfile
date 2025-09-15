@@ -111,37 +111,17 @@ pipeline {
       }
     }
 
-    // Optional: push image to a registry (uncomment & configure if you have docker.kihhuf.org)
-    // stage('Push Image') {
-    //   steps {
-    //     withCredentials([usernamePassword(credentialsId: 'nexus-docker-creds',
-    //       usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
-    //       sh '''
-    //         echo "$REG_PASS" | docker login docker.kihhuf.org -u "$REG_USER" --password-stdin
-    //         docker tag ${APP_IMAGE}:${APP_TAG} docker.kihhuf.org/${APP_IMAGE}:${APP_TAG}
-    //         docker tag ${APP_IMAGE}:latest docker.kihhuf.org/${APP_IMAGE}:latest
-    //         docker push docker.kihhuf.org/${APP_IMAGE}:${APP_TAG}
-    //         docker push docker.kihhuf.org/${APP_IMAGE}:latest
-    //       '''
-    //     }
-    //   }
-    // }
-
     stage('Deploy (Recreate Container)') {
       steps {
-        sh '''
-          #!/usr/bin/env bash
+        sh '''#!/usr/bin/env bash
           set -euo pipefail
 
-          # Stop & remove prior container (if any)
           docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
 
-          # Run new version with host:8888 -> container:8082
           docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
             -p ${APP_PORT_HOST}:${APP_PORT_CONT} \
             ${APP_IMAGE}:${APP_TAG}
 
-          # Health check (up to 60s)
           for i in {1..30}; do
             if curl -fsS http://localhost:${APP_PORT_HOST}/ >/dev/null; then
               echo "✅ App healthy at http://localhost:${APP_PORT_HOST}/"
