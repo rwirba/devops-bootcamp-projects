@@ -10,8 +10,8 @@ pipeline {
     // Container deployment settings (same Docker host where Jenkins/agent run)
     APP_IMAGE        = 'ezlearn/tomcat-app'     // change to your org/image if you wish
     CONTAINER_NAME   = 'ezlearn-app'
-    APP_PORT_HOST    = '8081'                   // external port you want
-    APP_PORT_CONT    = '8080'                   // Tomcat internal port
+    APP_PORT_HOST    = '8888'                   // external port you want
+    APP_PORT_CONT    = '8082'                   // Tomcat internal port
   }
 
   options {
@@ -128,39 +128,44 @@ pipeline {
     // }
 
     stage('Deploy (Recreate Container)') {
-        steps {
-          sh """
-            set -euo pipefail
+      steps {
+        sh """
+          set -euo pipefail
 
-            # Stop & remove any previous container
-            docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
+          # Stop & remove prior container (if any)
+          docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
 
-            # Run the new version (host:8888 → container:8082)
-            docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
-                -p 8888:8082 \
-                ${APP_IMAGE}:${APP_TAG}
+          # Run new version with host:8888 -> container:8082
+          docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
+            -p ${APP_PORT_HOST}:${APP_PORT_CONT} \
+            ${APP_IMAGE}:${APP_TAG}
 
-            # Health check (wait up to ~60s)
-            for i in {1..30}; do
-                if curl -fsS http://localhost:8888/ >/dev/null; then
-                echo "✅ App is healthy on http://localhost:8888/"
-                exit 0
-                fi
-                sleep 2
-            done
+          # Health check (up to 60s)
+          for i in {1..30}; do
+            if curl -fsS http://localhost:${APP_PORT_HOST}/ >/dev/null; then
+              echo "✅ App healthy at http://localhost:${APP_PORT_HOST}/"
+              exit 0
+            fi
+            sleep 2
+          done
 
-            echo "❌ Health check failed"
-            docker logs ${CONTAINER_NAME} || true
-            exit 1
-            """
-        }
-      
+          echo "❌ Health check failed"
+          docker logs ${CONTAINER_NAME} || true
+          exit 1
+        """
+      }
     }
   }
 
   post {
-    success { echo "✅ Deployed ${APP_IMAGE}:${APP_TAG} to container '${CONTAINER_NAME}' on port ${APP_PORT_HOST}" }
+    // Optional: also clean after the build if you installed the plugin
+    always {
+      script {
+        try { cleanWs() } catch (err) { /* plugin not installed; ignore */ }
+      }
+      sh 'docker image prune -f || true'
+    }
+    success { echo "✅ Deployed ${APP_IMAGE}:${APP_TAG} to '${CONTAINER_NAME}' on port ${APP_PORT_HOST}" }
     failure { echo "❌ Pipeline failed" }
-    always  { sh 'docker image prune -f || true' }
   }
 }
