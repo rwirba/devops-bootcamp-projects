@@ -123,16 +123,16 @@ pipeline {
             ${APP_IMAGE}:${APP_TAG}
 
           for i in {1..30}; do
-            if curl -fsS http://localhost:${APP_PORT_HOST}/ >/dev/null; then
-              echo "✅ App healthy at http://localhost:${APP_PORT_HOST}/"
-              exit 0
+            if curl -sS -o /dev/null "http://localhost:${APP_PORT_HOST}/"; then
+                echo "✅ App reachable at http://localhost:${APP_PORT_HOST}/"
+                exit 0
             fi
             sleep 2
-          done
+            done
 
-          echo "❌ Health check failed"
-          docker logs ${CONTAINER_NAME} || true
-          exit 1
+            echo "❌ Health check failed (no TCP/HTTP response)"
+            docker logs ${CONTAINER_NAME} || true
+            exit 1
         '''
       }
     }
