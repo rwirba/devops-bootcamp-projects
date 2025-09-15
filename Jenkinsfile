@@ -130,6 +130,7 @@ pipeline {
     stage('Deploy (Recreate Container)') {
       steps {
         sh '''
+          #!/usr/bin/env bash
           set -euo pipefail
 
           # Stop & remove prior container (if any)
