@@ -15,9 +15,12 @@ pipeline {
   }
 
   options {
-    timestamps()
-    buildDiscarder(logRotator(numToKeepStr: '15'))
+    skipDefaultCheckout(true) 
+    disableConcurrentBuilds()
+    // This cleans up workspace after build too
+    cleanWs()
   }
+
 
   stages {
     stage('Checkout') {
@@ -120,7 +123,7 @@ pipeline {
 
     stage('Deploy (Recreate Container)') {
         steps {
-            sh """
+          sh """
             set -euo pipefail
 
             # Stop & remove any previous container
@@ -145,7 +148,7 @@ pipeline {
             exit 1
             """
         }
-      }
+      
     }
   }
 
