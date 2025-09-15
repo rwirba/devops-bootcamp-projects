@@ -119,29 +119,31 @@ pipeline {
     // }
 
     stage('Deploy (Recreate Container)') {
-      steps {
-        script {
-          sh """
-            set -e
+        steps {
+            sh """
+            set -euo pipefail
+
             # Stop & remove any previous container
-            docker rm -f ${CONTAINER_NAME} || true
+            docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
 
-            # Run the new version
-            docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \\
-              -p ${APP_PORT_HOST}:${APP_PORT_CONT} \\
-              ${APP_IMAGE}:${APP_TAG}
+            # Run the new version (host:8888 → container:8082)
+            docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
+                -p 8888:8082 \
+                ${APP_IMAGE}:${APP_TAG}
 
-            # Health check (up to ~60s)
+            # Health check (wait up to ~60s)
             for i in {1..30}; do
-              curl -fsS http://localhost:${APP_PORT_HOST}/ >/dev/null ; then
-              echo "App is healthy..."
-              exit 0
+                if curl -fsS http://localhost:8888/ >/dev/null; then
+                echo "✅ App is healthy on http://localhost:8888/"
+                exit 0
+                fi
+                sleep 2
             done
+
             echo "❌ Health check failed"
             docker logs ${CONTAINER_NAME} || true
-
             exit 1
-          """
+            """
         }
       }
     }
