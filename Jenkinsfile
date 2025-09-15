@@ -17,12 +17,18 @@ pipeline {
   options {
     skipDefaultCheckout() 
     disableConcurrentBuilds()
-    // This cleans up workspace after build too
-    cleanWs()
   }
-
+  
 
   stages {
+    stage('Workspace Cleanup') {
+      steps {
+        // If you have the Workspace Cleanup plugin, use cleanWs(); otherwise deleteDir()
+        script {
+          try { cleanWs() } catch (err) { deleteDir() }
+        }
+      }
+    }
     stage('Checkout') {
       steps { checkout scm }
     }
