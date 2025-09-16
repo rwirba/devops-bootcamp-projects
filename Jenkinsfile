@@ -7,9 +7,8 @@ pipeline {
     NEXUS_REPO       = 'ezlearn-release'
     VERSION          = '1.0.0'
 
-    // Container deployment settings (same Docker host where Jenkins/agent run)
-    APP_IMAGE        = 'ezlearn/ezlearn-app'     // change to your org/image if you wish
-    CONTAINER_NAME   = 'ezlearn-app'
+    APP_IMAGE        = 'ezlearn-app'     // change to your org/image if you wish
+    CONTAINER_NAME   = 'ezlearn'
     APP_PORT_HOST    = '8888'                   // external port you want
     APP_PORT_CONT    = '8080'                   // Tomcat internal port
     DOCKERHUB_IMAGE  = 'mitechllc'
@@ -112,18 +111,31 @@ pipeline {
       }
     }
     stage('Push Image to Docker Hub') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-          usernameVariable: 'HUB_USER', passwordVariable: 'HUB_PASS')]) {
-          sh '''
-            echo "$HUB_PASS" | docker login -u "$HUB_USER" --password-stdin
-            docker tag '${APP_IMAGE}:latest'     '${DOCKERHUB_IMAGE}/ezlearn-app:latest'
+        steps {
+            // Optional preflight to catch accidental uppercase in names
+            script {
+            if (env.APP_IMAGE != env.APP_IMAGE.toLowerCase()) {
+                error "APP_IMAGE must be lowercase (current: ${env.APP_IMAGE})"
+            }
+            if (env.DOCKERHUB_IMAGE != env.DOCKERHUB_IMAGE.toLowerCase()) {
+                error "DOCKERHUB_IMAGE must be lowercase (current: ${env.DOCKERHUB_IMAGE})"
+            }
+            }
 
-        
-            docker push '${DOCKERHUB_IMAGE}/ezlearn-app:latest'
+            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+            usernameVariable: 'HUB_USER', passwordVariable: 'HUB_PASS')]) {
 
-            docker logout || true
-          '''
+            sh """
+                echo "\$HUB_PASS" | docker login -u "\$HUB_USER" --password-stdin
+
+                docker tag ${APP_IMAGE}:${APP_TAG} ${DOCKERHUB_IMAGE}:${APP_TAG}
+                docker tag ${APP_IMAGE}:latest     ${DOCKERHUB_IMAGE}:latest
+
+                docker push ${DOCKERHUB_IMAGE}:${APP_TAG}
+                docker push ${DOCKERHUB_IMAGE}:latest
+
+                docker logout || true
+          """
         }
       }
     }
