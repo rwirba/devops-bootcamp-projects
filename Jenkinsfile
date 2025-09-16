@@ -8,11 +8,11 @@ pipeline {
     VERSION          = '1.0.0'
 
     // Container deployment settings (same Docker host where Jenkins/agent run)
-    APP_IMAGE        = 'ezlearn/tomcat-app'     // change to your org/image if you wish
+    APP_IMAGE        = 'ezlearn/ezlearn-app'     // change to your org/image if you wish
     CONTAINER_NAME   = 'ezlearn-app'
     APP_PORT_HOST    = '8888'                   // external port you want
     APP_PORT_CONT    = '8080'                   // Tomcat internal port
-    DOCKERHUB_IMAGE  = 'mitechllc/tomcat-app'
+    DOCKERHUB_IMAGE  = 'mitechllc'
   }
 
   options {
@@ -117,10 +117,10 @@ pipeline {
           usernameVariable: 'HUB_USER', passwordVariable: 'HUB_PASS')]) {
           sh '''
             echo "$HUB_PASS" | docker login -u "$HUB_USER" --password-stdin
-            docker tag '${APP_IMAGE}:latest'     '${DOCKERHUB_IMAGE}:latest'
+            docker tag '${APP_IMAGE}:latest'     '${DOCKERHUB_IMAGE}/ezlearn-app:latest'
 
         
-            docker push '${DOCKERHUB_IMAGE}:latest'
+            docker push '${DOCKERHUB_IMAGE}/ezlearn-app:latest'
 
             docker logout || true
           '''
