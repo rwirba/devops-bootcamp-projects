@@ -128,11 +128,11 @@ pipeline {
             sh """
                 echo "\$HUB_PASS" | docker login -u "\$HUB_USER" --password-stdin
 
-                docker tag ${APP_IMAGE}:${APP_TAG} ${DOCKERHUB_IMAGE}:${APP_TAG}
-                docker tag ${APP_IMAGE}:latest     ${DOCKERHUB_IMAGE}:latest
+                docker tag ${APP_IMAGE}:${APP_TAG} ${DOCKERHUB_IMAGE}/${APP_IMAGE}:latest
+                
 
-                docker push ${DOCKERHUB_IMAGE}:${APP_TAG}
-                docker push ${DOCKERHUB_IMAGE}:latest
+                
+                docker push ${DOCKERHUB_IMAGE}/${APP_IMAGE}:latest
 
                 docker logout || true
           """
