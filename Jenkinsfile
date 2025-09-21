@@ -8,7 +8,7 @@ pipeline {
     VERSION          = '1.0.0'
 
     APP_IMAGE        = 'ezlearn-app'     // change to your org/image if you wish
-    CONTAINER_NAME   = 'ezlearn'
+    CONTAINER_NAME   = 'ezlearn-app'
     APP_PORT_HOST    = '8888'                   // external port you want
     APP_PORT_CONT    = '8080'                   // Tomcat internal port
     DOCKERHUB_IMAGE  = 'mitechllc'
@@ -112,7 +112,6 @@ pipeline {
     }
     stage('Push Image to Docker Hub') {
         steps {
-            // Optional preflight to catch accidental uppercase in names
             script {
             if (env.APP_IMAGE != env.APP_IMAGE.toLowerCase()) {
                 error "APP_IMAGE must be lowercase (current: ${env.APP_IMAGE})"
@@ -140,37 +139,38 @@ pipeline {
       }
     }
     stage('Deploy (Recreate Container)') {
-      steps {
-        sh '''#!/usr/bin/env bash
-          set -euo pipefail
+        steps {
+            sh '''#!/usr/bin/env bash
+                set -euo pipefail
 
-          docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
+                # Stop and remove the existing container if it's running
+                docker rm -f ezlearn-app >/dev/null 2>&1 || true
 
-          docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
-            -p ${APP_PORT_HOST}:${APP_PORT_CONT} \
-            ${APP_IMAGE}:${APP_TAG}
+                # Run the new container with the same name and port
+                docker run -d --restart=unless-stopped --name ezlearn-app \
+                    -p 8888:8080 \
+                    ezlearn-app:${APP_TAG}
 
-            CONTAINER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})"
-            echo "Container IP: $CONTAINER_IP (checking http://$CONTAINER_IP:${APP_PORT_CONT}/)"
+                CONTAINER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ezlearn-app)"
+                echo "Container IP: $CONTAINER_IP (checking http://$CONTAINER_IP:8080/)"
 
-            # Wait up to ~60s for app inside the container
-            for i in {1..30}; do
-            if curl -sS -o /dev/null "http://$CONTAINER_IP:${APP_PORT_CONT}/"; then
-                echo "✅ App reachable at http://$CONTAINER_IP:${APP_PORT_CONT}/"
-                exit 0
-            fi
-            sleep 2
-            done
+                # Wait up to ~60s for app inside the container
+                for i in {1..30}; do
+                    if curl -sS -o /dev/null "http://$CONTAINER_IP:8080/"; then
+                    echo "✅ App reachable at http://$CONTAINER_IP:8080/"
+                    exit 0
+                    fi
+                    sleep 2
+                done
 
-            echo "❌ Health check failed (no response on container IP/port)"
-            docker logs ${CONTAINER_NAME} || true
-            exit 1
-        '''
-      }
+                echo "❌ Health check failed (no response on container IP/port)"
+                docker logs ezlearn-app || true
+                exit 1
+            '''
+            }
+        }
     }
-  }
-
-  post {
+    post {
     // Optional: also clean after the build if you installed the plugin
     always {
       script {
@@ -182,3 +182,4 @@ pipeline {
     failure { echo "❌ Pipeline failed" }
   }
 }
+  

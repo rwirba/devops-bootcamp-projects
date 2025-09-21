@@ -49,3 +49,39 @@ The Jenkinsfile defines the automated pipeline process. Here's what each stage d
 
 ```groovy
 agent { label 'infra-build-node' }
+
+
+docker run -d --name jenkins \
+  -p 8080:8080 -p 50000:50000 \
+  -v /opt/jenkins:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/jenkins:lts-jdk17
+
+JENKINS_URL="http://jenkins.mitechnology.org:8080/"
+AGENT_NAME="infra-build-node"
+AGENT_SECRET="428e6a95db4b26ad72bcf90d8b299cc07991f77a872522f00d1523caeaca6d30"
+
+docker run -d --restart=unless-stopped --name infra-build-node \
+  -u root \
+  -e JENKINS_URL="$JENKINS_URL" \
+  -e JENKINS_AGENT_NAME="$AGENT_NAME" \
+  -e JENKINS_AGENT_WORKDIR="/home/jenkins/agent" \
+  -e JENKINS_SECRET="$JENKINS_SECRET" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/inbound-agent:latest-jdk17
+docker logs -f infra-build-node
+
+
+docker run -d --restart=unless-stopped --name infra-build-node \
+  -u root \
+  -e JENKINS_URL="http://jenkins.mitechnology.org:8080/" \
+  -e JENKINS_AGENT_NAME="infra-build-node" \
+  -e JENKINS_AGENT_WORKDIR="/home/jenkins/agent" \
+  -e JENKINS_SECRET="428e6a95db4b26ad72bcf90d8b299cc07991f77a872522f00d1523caeaca6d30" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/inbound-agent:latest-jdk17 
+
+
+apt-get update &&
+apt-get install -y --no-install-recommends maven docker.io git curl jq &&
+rm -rf /var/lib/apt/lists/*
