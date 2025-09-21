@@ -10,25 +10,24 @@ pipeline {
     APP_IMAGE        = 'mitechllc/ezlearn' 
     APP_TAG          = 'latest'
     CONTAINER_NAME   = 'ezlearn-app'
-    APP_PORT_HOST    = '8888'                   // external port you want
-    APP_PORT_CONT    = '8080'                   // Tomcat internal port
+    APP_PORT_HOST    = '8888'
+    APP_PORT_CONT    = '8080'
   }
 
   options {
     skipDefaultCheckout() 
     disableConcurrentBuilds()
   }
-  
 
   stages {
     stage('Workspace Cleanup') {
       steps {
-        // If you have the Workspace Cleanup plugin, use cleanWs(); otherwise deleteDir()
         script {
           try { cleanWs() } catch (err) { deleteDir() }
         }
       }
     }
+
     stage('Checkout') {
       steps { checkout scm }
     }
@@ -92,7 +91,7 @@ pipeline {
                 --settings jenkins/settings.xml
             """
           }
-          env.BUILD_TS = ts   // keep for tagging if you want
+          env.BUILD_TS = ts
         }
       }
     }
@@ -106,64 +105,70 @@ pipeline {
         }
       }
     }
+
     stage('Push Image to Docker Hub') {
-        steps {
-            script {
-
-            withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
-            usernameVariable: 'HUB_USER', passwordVariable: 'HUB_PASS')]) {
-
+      steps {
+        script {
+          withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'HUB_USER',
+            passwordVariable: 'HUB_PASS'
+          )]) {
             sh """
-                echo "\$HUB_PASS" | docker login -u "\$HUB_USER" --password-stdin
-
-                docker push ${APP_IMAGE}:${APP_TAG}
-
-                docker logout || true
-          """
+              echo "\$HUB_PASS" | docker login -u "\$HUB_USER" --password-stdin
+              docker push ${APP_IMAGE}:${APP_TAG}
+              docker logout || true
+            """
+          }
         }
       }
     }
+
     stage('Deploy (Recreate Container)') {
-        steps {
-            sh '''#!/usr/bin/env bash
-                set -euo pipefail
+      steps {
+        sh '''#!/usr/bin/env bash
+          set -euo pipefail
 
-                # Stop and remove the existing container if it's running
-                docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
+          # Stop and remove the existing container if it's running
+          docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
 
-                # Run the new container with the same name and port
-                docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
-                    -p 8888:8080 \
-                    ${APP_IMAGE}:${APP_TAG}
+          # Run the new container with the same name and port
+          docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
+            -p ${APP_PORT_HOST}:${APP_PORT_CONT} \
+            ${APP_IMAGE}:${APP_TAG}
 
-                CONTAINER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ezlearn-app)"
-                echo "Container IP: $CONTAINER_IP (checking http://$CONTAINER_IP:8080/)"
+          CONTAINER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})"
+          echo "Container IP: $CONTAINER_IP (checking http://$CONTAINER_IP:${APP_PORT_CONT}/)"
 
-                # Wait up to ~60s for app inside the container
-                for i in {1..30}; do
-                    if curl -sS -o /dev/null "http://$CONTAINER_IP:8080/"; then
-                    echo "✅ App reachable at http://$CONTAINER_IP:8080/"
-                    exit 0
-                    fi
-                    sleep 2
-                done
+          # Wait up to ~60s for app inside the container
+          for i in {1..30}; do
+            if curl -sS -o /dev/null "http://$CONTAINER_IP:${APP_PORT_CONT}/"; then
+              echo "✅ App reachable at http://$CONTAINER_IP:${APP_PORT_CONT}/"
+              exit 0
+            fi
+            sleep 2
+          done
 
-                echo "❌ Health check failed (no response on container IP/port)"
-                docker logs ${CONTAINER_NAME} || true
-                exit 1
-            '''
-            }
-        }
+          echo "❌ Health check failed (no response on container IP/port)"
+          docker logs ${CONTAINER_NAME} || true
+          exit 1
+        '''
+      }
     }
-    post {
-    // Optional: also clean after the build if you installed the plugin
+  }
+
+  post {
     always {
       script {
         try { cleanWs() } catch (err) { /* plugin not installed; ignore */ }
       }
       sh 'docker image prune -f || true'
     }
-    success { echo "✅ Deployed ${APP_IMAGE} to '${CONTAINER_NAME}' on port ${APP_PORT_HOST}" }
-    failure { echo "❌ Pipeline failed" }
+    success {
+      echo "✅ Deployed ${APP_IMAGE} to '${CONTAINER_NAME}' on port ${APP_PORT_HOST}"
+    }
+    failure {
+      echo "❌ Pipeline failed"
+    }
   }
 }
