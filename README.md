@@ -85,3 +85,49 @@ docker run -d --restart=unless-stopped --name infra-build-node \
 apt-get update &&
 apt-get install -y --no-install-recommends maven docker.io git curl jq &&
 rm -rf /var/lib/apt/lists/*
+
+
+
+docker run -d \
+  --name jenkins \
+  -p 8080:8080 -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --restart=unless-stopped \
+  jenkins/jenkins:lts-jdk17
+
+
+
+
+docker run -d \
+  --restart=unless-stopped \
+  --name infra-build-node \
+  --user root \
+  -e JENKINS_URL="http://jenkins.mitechnology.org:8080/" \
+  -e JENKINS_AGENT_NAME="infra-build-node" \
+  -e JENKINS_SECRET="428e6a95db4b26ad72bcf90d8b299cc07991f77a872522f00d1523caeaca6d30" \
+  -v jenkins_agent:/home/jenkins/agent \
+  -v jenkins_home:/home/jenkins/.jenkins \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/inbound-agent:latest-jdk17 
+
+
+ 
+docker run -d \
+  --name nexus \
+  -p 8081:8081 \
+  -v nexus-data:/nexus-data \
+  --restart=unless-stopped \
+  sonatype/nexus3 
+
+  docker run -d \
+  --name sonarqube \
+  -p 9000:9000 \
+  -v sonarqube_data:/opt/sonarqube/data \
+  -v sonarqube_logs:/opt/sonarqube/logs \
+  -v sonarqube_extensions:/opt/sonarqube/extensions \
+  --restart=unless-stopped \
+  sonarqube:community
+
+/home/jenkins/agent/workspace/ezlearn-docker-deploy 
+/home/jenkins/agent/workspace/ezlearn-docker-deploy
