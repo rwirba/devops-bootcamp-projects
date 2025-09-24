@@ -129,7 +129,7 @@ pipeline {
     stage('Deploy CICD stack (Nexus & SonarQube)') {
       steps {
         withCredentials([file(credentialsId: 'kubeconfig_ezlearn', variable: 'KCFG')]) {
-          sh '''
+          sh '''#!/bin/bash
             set -e
             export KUBECONFIG="$KCFG"
 
@@ -141,7 +141,7 @@ pipeline {
               --set ingress.className="${INGRESS_CLASS}" \
               --set ingress.host="${NEXUS_HOST}" \
               --set persistence.existingClaim="nexus-data-pvc" \
-              --set-string nodeSelector."kubernetes\.io/hostname"=${NODE_HOST} \
+              --set-string 'nodeSelector.kubernetes\\.io/hostname'="${NODE_HOST}" \
               --set tolerations[0].key=node-role.kubernetes.io/control-plane \
               --set tolerations[0].operator=Exists \
               --set tolerations[0].effect=NoSchedule
@@ -156,7 +156,7 @@ pipeline {
               --set persistence.data.existingClaim="sonarqube-data-pvc" \
               --set persistence.extensions.existingClaim="sonarqube-extensions-pvc" \
               --set persistence.logs.existingClaim="sonarqube-logs-pvc" \
-              --set-string nodeSelector."kubernetes\.io/hostname"=${NODE_HOST} \
+              --set-string 'nodeSelector.kubernetes\\.io/hostname'="${NODE_HOST}" \
               --set tolerations[0].key=node-role.kubernetes.io/control-plane \
               --set tolerations[0].operator=Exists \
               --set tolerations[0].effect=NoSchedule
@@ -181,7 +181,7 @@ pipeline {
               --set ingress.className="${INGRESS_CLASS}" \
               --set ingress.host="${EZLEARN_HOST}" \
               --set persistence.existingClaim="tomcat-webapps-pvc" \
-              --set-string nodeSelector."kubernetes\.io/hostname"=${NODE_HOST} \
+              --set-string 'nodeSelector.kubernetes\\.io/hostname'="${NODE_HOST}" \
               --set tolerations[0].key=node-role.kubernetes.io/control-plane \
               --set tolerations[0].operator=Exists \
               --set tolerations[0].effect=NoSchedule
