@@ -1,15 +1,35 @@
+namespace: ezlearn-dev-ns
+
+image:
+  repository: mitechllc/ezlearn
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecret: ""
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations: {}
+
 ingress:
   enabled: true
-  host: ezlearn.local  # or sonarqube.local, ezlearn.local
+  className: traefik           # or nginx
+  host: ezlearn-dev.mitechnology.org
+  path: /
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
 
 persistence:
   enabled: true
   existingClaim: "tomcat-webapps-pvc"
-  mountPath: "/usr/local/tomcat/webapps"   # change if your image uses /opt/tomcat/webapps
+  mountPath: "/usr/local/tomcat/webapps"
 
-service:
-  type: ClusterIP     # or NodePort or LoadBalancer
-  port: 8080
-  targetPort: 8080
-  nodePort: null      # e.g., 30080 if type=NodePort
-  annotations: {}
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
