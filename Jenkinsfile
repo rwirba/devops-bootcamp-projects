@@ -19,6 +19,7 @@ pipeline {
     string(name: 'EZLEARN_TAG',   defaultValue: 'latest',    description: 'Tag to deploy for ezlearn app')
 
     string(name: 'K8S_CONTEXT',   defaultValue: '',          description: 'Optional kubectl context (from kubeconfig); leave blank to use current')
+    string(name: 'NODE_HOST', defaultValue: 'ip-xxx-xxx-xxx-xxx', description: 'kubernetes.io/hostname where hostPath PVs live')
   }
 
   environment {
@@ -139,7 +140,11 @@ pipeline {
               --set image.tag=${NEXUS_IMAGE##*:} \
               --set ingress.className="${INGRESS_CLASS}" \
               --set ingress.host="${NEXUS_HOST}" \
-              --set persistence.existingClaim="nexus-data-pvc"
+              --set persistence.existingClaim="nexus-data-pvc" \
+              --set-string nodeSelector."kubernetes\.io/hostname"=${NODE_HOST} \
+              --set tolerations[0].key=node-role.kubernetes.io/control-plane \
+              --set tolerations[0].operator=Exists \
+              --set tolerations[0].effect=NoSchedule
 
             # --- SonarQube ---
             helm upgrade --install sonarqube ${CHARTS_DIR}/sonarqube-chart \
@@ -150,7 +155,11 @@ pipeline {
               --set ingress.host="${SONAR_HOST}" \
               --set persistence.data.existingClaim="sonarqube-data-pvc" \
               --set persistence.extensions.existingClaim="sonarqube-extensions-pvc" \
-              --set persistence.logs.existingClaim="sonarqube-logs-pvc"
+              --set persistence.logs.existingClaim="sonarqube-logs-pvc" \
+              --set-string nodeSelector."kubernetes\.io/hostname"=${NODE_HOST} \
+              --set tolerations[0].key=node-role.kubernetes.io/control-plane \
+              --set tolerations[0].operator=Exists \
+              --set tolerations[0].effect=NoSchedule
 
             kubectl -n ${CICD_NS} get deploy,svc,ingress,pvc
           '''
@@ -171,7 +180,11 @@ pipeline {
               --set image.tag=${EZLEARN_TAG} \
               --set ingress.className="${INGRESS_CLASS}" \
               --set ingress.host="${EZLEARN_HOST}" \
-              --set persistence.existingClaim="tomcat-webapps-pvc"
+              --set persistence.existingClaim="tomcat-webapps-pvc" \
+              --set-string nodeSelector."kubernetes\.io/hostname"=${NODE_HOST} \
+              --set tolerations[0].key=node-role.kubernetes.io/control-plane \
+              --set tolerations[0].operator=Exists \
+              --set tolerations[0].effect=NoSchedule
 
             kubectl -n ${DEV_NS} get deploy,svc,ingress,pvc
           '''
