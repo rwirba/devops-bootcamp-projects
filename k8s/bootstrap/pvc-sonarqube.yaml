@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-data-pvc
+  namespace: ezlearn-cicd-ns
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: manual
+  resources:
+    requests: { storage: 10Gi }
+  selector:
+    matchLabels: { pv: sonarqube-data }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-extensions-pvc
+  namespace: ezlearn-cicd-ns
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: manual
+  resources:
+    requests: { storage: 2Gi }
+  selector:
+    matchLabels: { pv: sonarqube-extensions }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-logs-pvc
+  namespace: ezlearn-cicd-ns
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: manual
+  resources:
+    requests: { storage: 2Gi }
+  selector:
+    matchLabels: { pv: sonarqube-logs }

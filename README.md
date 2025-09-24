@@ -130,4 +130,50 @@ docker run -d \
   sonarqube:community
 
 /home/jenkins/agent/workspace/ezlearn-docker-deploy 
-/home/jenkins/agent/workspace/ezlearn-docker-deploy
+/home/jenkins/agent/workspace/ezlearn-docker-deploy 
+
+
+RANCHER SETUP
+
+docker volume create rancher-data
+
+docker run -d \
+  --privileged \
+  --restart=unless-stopped \
+  --name rancher \
+  -p 8082:80 -p 8443:443 \
+  -v rancher-data:/var/lib/rancher \
+  rancher/rancher:latest
+
+
+
+Access Rancher at:
+https://:8443 
+
+docker logs 7d886f07a0d6 2>&1 | grep "Bootstrap Password:"
+password admin1234567 
+
+
+
+Step 1: Get kubectl Config from Rancher
+
+Go to your Rancher UI (https://<your-rancher-ip>:8443)
+Navigate to your Cluster
+Click "Kubeconfig File" (usually in the top-right corner)
+Download or copy the kubeconfig YAML
+
+
+Step 2: Configure kubectl on Jenkins Host
+On your Jenkins machine:
+
+
+Install kubectl if not already: 
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+Save the kubeconfig file to ~/.kube/config:
+
+mkdir -p ~/.kube
+vim ~/.kube/config
+# Paste the contents from Rancher here

@@ -1,0 +1,26 @@
+      containers:
+        - name: sonarqube
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SONAR_ES_BOOTSTRAP_CHECKS_DISABLE
+              value: "true"
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          volumeMounts:
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/data
+            - name: sonarqube-extensions
+              mountPath: /opt/sonarqube/extensions
+            - name: sonarqube-logs
+              mountPath: /opt/sonarqube/logs
+      volumes:
+        - name: sonarqube-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.data.existingClaim }}
+        - name: sonarqube-extensions
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.extensions.existingClaim }}
+        - name: sonarqube-logs
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.logs.existingClaim }}

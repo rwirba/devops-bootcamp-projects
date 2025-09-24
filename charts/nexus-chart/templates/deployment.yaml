@@ -1,0 +1,4 @@
+volumes:
+  - name: nexus-data
+    persistentVolumeClaim:
+      claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{ else }}nexus-data{{ end }}

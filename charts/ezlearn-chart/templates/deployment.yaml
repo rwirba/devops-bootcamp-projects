@@ -1,0 +1,28 @@
+      containers:
+        - name: ezlearn
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms256m -Xmx512m"
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: webapps
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+          readinessProbe:
+            httpGet: { path: "/", port: {{ .Values.service.targetPort }} }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: "/", port: {{ .Values.service.targetPort }} }
+            initialDelaySeconds: 60
+            periodSeconds: 20
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: webapps
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+        {{- end }}

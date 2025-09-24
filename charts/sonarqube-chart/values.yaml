@@ -1,0 +1,19 @@
+ingress:
+  enabled: true
+  host: sonarqube.local  # or sonarqube.local, ezlearn.local
+
+persistence:
+  data:
+    existingClaim: "sonarqube-data-pvc"
+  extensions:
+    existingClaim: "sonarqube-extensions-pvc"
+  logs:
+    existingClaim: "sonarqube-logs-pvc"
+
+# keep other values as you had (ingress, image, etc.)
+service:
+  type: ClusterIP
+  port: 9000
+  targetPort: 9000
+  nodePort: null
+  annotations: {}

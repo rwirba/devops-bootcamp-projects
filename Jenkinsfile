@@ -1,174 +1,200 @@
 pipeline {
   agent { label 'infra-build-node' }
 
-  environment {
-    SONARQUBE_SERVER = 'SonarQube'
-    NEXUS_URL        = 'http://nexus.mitechnology.org:8081'
-    NEXUS_REPO       = 'ezlearn-release'
-    VERSION          = '1.0.0'
-
-    APP_IMAGE        = 'mitechllc/ezlearn' 
-    APP_TAG          = 'latest'
-    CONTAINER_NAME   = 'ezlearn-app'
-    APP_PORT_HOST    = '8888'
-    APP_PORT_CONT    = '8080'
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    ansiColor('xterm')
   }
 
-  options {
-    skipDefaultCheckout() 
-    disableConcurrentBuilds()
+  parameters {
+    booleanParam(name: 'SKIP_BUILD', defaultValue: true,  description: 'Skip building/pushing ezlearn image (use pre-pushed tag)')
+    booleanParam(name: 'BOOTSTRAP_PV', defaultValue: false, description: 'Apply PV/PVC bootstrap (idempotent)')
+    string(name: 'INGRESS_CLASS', defaultValue: 'traefik', description: 'Ingress class (traefik or nginx)')
+    string(name: 'EZLEARN_HOST',  defaultValue: 'ezlearn-dev.mitechnology.org', description: 'Ingress host for ezlearn app')
+    string(name: 'NEXUS_HOST',    defaultValue: 'nexus.mitechnology.org',       description: 'Ingress host for Nexus')
+    string(name: 'SONAR_HOST',    defaultValue: 'sonarqube.mitechnology.org',   description: 'Ingress host for SonarQube')
+
+    string(name: 'DOCKER_ORG',    defaultValue: 'mitechllc', description: 'DockerHub org/user that holds ezlearn image')
+    string(name: 'EZLEARN_IMAGE', defaultValue: 'ezlearn',   description: 'Image name for ezlearn app')
+    string(name: 'EZLEARN_TAG',   defaultValue: 'latest',    description: 'Tag to deploy for ezlearn app')
+
+    string(name: 'K8S_CONTEXT',   defaultValue: '',          description: 'Optional kubectl context (from kubeconfig); leave blank to use current')
+  }
+
+  environment {
+    CICD_NS = 'ezlearn-cicd-ns'
+    DEV_NS  = 'ezlearn-dev-ns'
+    CHARTS_DIR = 'charts'
+    BOOTSTRAP_DIR = 'k8s/bootstrap'
+    // Images for Nexus & Sonar (pulled from DockerHub)
+    NEXUS_IMAGE = 'mitechllc/nexus3:latest'
+    SONAR_IMAGE = 'mitechllc/sonarqube:community'
   }
 
   stages {
-    stage('Workspace Cleanup') {
+    stage('Checkout') {
       steps {
-        script {
-          try { cleanWs() } catch (err) { deleteDir() }
+        checkout scm
+      }
+    }
+
+    stage('Install kubectl & helm if missing') {
+      steps {
+        sh '''
+          set -e
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x /usr/local/bin/kubectl
+          fi
+          if ! command -v helm >/dev/null 2>&1; then
+            curl -sSL https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz | tar -xz
+            mv linux-amd64/helm /usr/local/bin/helm && rm -rf linux-amd64
+          fi
+          helm version && kubectl version --client
+        '''
+      }
+    }
+
+    stage('Kube auth') {
+      steps {
+        withCredentials([file(credentialsId: 'kubeconfig_ezlearn', variable: 'KCFG')]) {
+          sh '''
+            export KUBECONFIG="$KCFG"
+            kubectl version --short
+            kubectl get ns
+          '''
+          script {
+            if (params.K8S_CONTEXT?.trim()) {
+              sh "KUBECONFIG=$KCFG kubectl config use-context '${params.K8S_CONTEXT}'"
+            }
+          }
         }
       }
     }
 
-    stage('Checkout') {
-      steps { checkout scm }
-    }
+    // stage('(Optional) Build & Push ezlearn image') {
+    //   when { expression { !params.SKIP_BUILD } }
+    //   steps {
+    //     withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+    //       sh '''
+    //         set -e
+    //         IMAGE="${DOCKER_ORG}/${EZLEARN_IMAGE}:${EZLEARN_TAG}"
+    //         echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+    //         # Expect Dockerfile at repo root or adjust path:
+    //         docker build -t "$IMAGE" .
+    //         docker push "$IMAGE"
+    //         docker logout
+    //       '''
+    //     }
+    //   }
+    // }
 
-    stage('Build') {
-      steps { sh 'mvn -B clean compile' }
-    }
-
-    stage('Unit Test') {
-      steps { sh 'mvn -B test' }
-      post { always { junit 'target/surefire-reports/*.xml' } }
-    }
-
-    stage('Checkstyle Analysis') {
-      steps { sh 'mvn -B checkstyle:check' }
-    }
-
-    stage('SonarQube Analysis') {
+    stage('Bootstrap PV/PVC (once)') {
+      when { expression { return params.BOOTSTRAP_PV } }
       steps {
-        withSonarQubeEnv("${SONARQUBE_SERVER}") {
+        withCredentials([file(credentialsId: 'kubeconfig_ezlearn', variable: 'KCFG')]) {
           sh '''
-            mvn -B sonar:sonar \
-              -Dsonar.projectKey=ezlearn \
-              -Dsonar.host.url=http://sonarqube.mitechnology.org:9000
+            set -e
+            export KUBECONFIG="$KCFG"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pv-nexus-data.yaml"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pv-sonarqube-data.yaml"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pv-sonarqube-extensions.yaml"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pv-sonarqube-logs.yaml"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pv-tomcat-webapps.yaml"
+
+            kubectl apply -f "${BOOTSTRAP_DIR}/pvc-nexus-data.yaml"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pvc-sonarqube.yaml"
+            kubectl apply -f "${BOOTSTRAP_DIR}/pvc-tomcat-webapps.yaml"
+
+            echo "PVCs in CICD NS:"
+            kubectl -n ${CICD_NS} get pvc
+            echo "PVCs in DEV NS:"
+            kubectl -n ${DEV_NS} get pvc
           '''
         }
       }
     }
 
-    stage('Package WAR') {
+    stage('Helm Lint') {
       steps {
         sh '''
-          mvn -B package
-          cp target/ezlearn-1.0.0.war target/ezlearn.war
+          helm lint ${CHARTS_DIR}/ezlearn-chart
+          helm lint ${CHARTS_DIR}/nexus-chart
+          helm lint ${CHARTS_DIR}/sonarqube-chart
         '''
       }
     }
 
-    stage('Publish to Nexus (WAR)') {
+    stage('Deploy CICD stack (Nexus & SonarQube)') {
       steps {
-        script {
-          def ts = sh(script: "date +%Y%m%d%H%M%S", returnStdout: true).trim()
-          def warName = "ezlearn-${ts}.war"
-          sh "cp target/ezlearn.war target/${warName}"
+        withCredentials([file(credentialsId: 'kubeconfig_ezlearn', variable: 'KCFG')]) {
+          sh '''
+            set -e
+            export KUBECONFIG="$KCFG"
 
-          withCredentials([usernamePassword(
-            credentialsId: 'nexus-creds',
-            usernameVariable: 'NEXUS_USER',
-            passwordVariable: 'NEXUS_PASS'
-          )]) {
-            sh """
-              mvn -B deploy:deploy-file \
-                -DgroupId=com.ezlearn \
-                -DartifactId=ezlearn \
-                -Dversion=${ts} \
-                -Dpackaging=war \
-                -Dfile=target/${warName} \
-                -DrepositoryId=ezlearn-release \
-                -Durl=${NEXUS_URL}/repository/${NEXUS_REPO}/ \
-                -DgeneratePom=true \
-                --settings jenkins/settings.xml
-            """
-          }
-          env.BUILD_TS = ts
+            # --- Nexus ---
+            helm upgrade --install nexus ${CHARTS_DIR}/nexus-chart \
+              --namespace ${CICD_NS} --create-namespace \
+              --set image.repository=${NEXUS_IMAGE%%:*} \
+              --set image.tag=${NEXUS_IMAGE##*:} \
+              --set ingress.className="${INGRESS_CLASS}" \
+              --set ingress.host="${NEXUS_HOST}" \
+              --set persistence.existingClaim="nexus-data-pvc"
+
+            # --- SonarQube ---
+            helm upgrade --install sonarqube ${CHARTS_DIR}/sonarqube-chart \
+              --namespace ${CICD_NS} --create-namespace \
+              --set image.repository=${SONAR_IMAGE%%:*} \
+              --set image.tag=${SONAR_IMAGE##*:} \
+              --set ingress.className="${INGRESS_CLASS}" \
+              --set ingress.host="${SONAR_HOST}" \
+              --set persistence.data.existingClaim="sonarqube-data-pvc" \
+              --set persistence.extensions.existingClaim="sonarqube-extensions-pvc" \
+              --set persistence.logs.existingClaim="sonarqube-logs-pvc"
+
+            kubectl -n ${CICD_NS} get deploy,svc,ingress,pvc
+          '''
         }
       }
     }
 
-    stage('Build App Image') {
+    stage('Deploy ezlearn App') {
       steps {
-        script {
-          sh """
-            docker build -t ${APP_IMAGE}:${APP_TAG} .
-          """
+        withCredentials([file(credentialsId: 'kubeconfig_ezlearn', variable: 'KCFG')]) {
+          sh '''
+            set -e
+            export KUBECONFIG="$KCFG"
+
+            helm upgrade --install ezlearn ${CHARTS_DIR}/ezlearn-chart \
+              --namespace ${DEV_NS} --create-namespace \
+              --set image.repository=${DOCKER_ORG}/${EZLEARN_IMAGE} \
+              --set image.tag=${EZLEARN_TAG} \
+              --set ingress.className="${INGRESS_CLASS}" \
+              --set ingress.host="${EZLEARN_HOST}" \
+              --set persistence.existingClaim="tomcat-webapps-pvc"
+
+            kubectl -n ${DEV_NS} get deploy,svc,ingress,pvc
+          '''
         }
-      }
-    }
-
-    stage('Push Image to Docker Hub') {
-      steps {
-        script {
-          withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-creds',
-            usernameVariable: 'HUB_USER',
-            passwordVariable: 'HUB_PASS'
-          )]) {
-            sh """
-              echo "\$HUB_PASS" | docker login -u "\$HUB_USER" --password-stdin
-              docker push ${APP_IMAGE}:${APP_TAG}
-              docker logout || true
-            """
-          }
-        }
-      }
-    }
-
-    stage('Deploy (Recreate Container)') {
-      steps {
-        sh '''#!/usr/bin/env bash
-          set -euo pipefail
-
-          # Stop and remove the existing container if it's running
-          docker rm -f ${CONTAINER_NAME} >/dev/null 2>&1 || true
-
-          # Run the new container with the same name and port
-          docker run -d --restart=unless-stopped --name ${CONTAINER_NAME} \
-            -p ${APP_PORT_HOST}:${APP_PORT_CONT} \
-            ${APP_IMAGE}:${APP_TAG}
-
-          CONTAINER_IP="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_NAME})"
-          echo "Container IP: $CONTAINER_IP (checking http://$CONTAINER_IP:${APP_PORT_CONT}/)"
-
-          # Wait up to ~60s for app inside the container
-          for i in {1..30}; do
-            if curl -sS -o /dev/null "http://$CONTAINER_IP:${APP_PORT_CONT}/"; then
-              echo "✅ App reachable at http://$CONTAINER_IP:${APP_PORT_CONT}/"
-              exit 0
-            fi
-            sleep 2
-          done
-
-          echo "❌ Health check failed (no response on container IP/port)"
-          docker logs ${CONTAINER_NAME} || true
-          exit 1
-        '''
       }
     }
   }
 
   post {
-    always {
-      script {
-        try { cleanWs() } catch (err) { /* plugin not installed; ignore */ }
-      }
-      sh 'docker image prune -f || true'
-    }
     success {
-      echo "✅ Deployed ${APP_IMAGE} to '${CONTAINER_NAME}' on port ${APP_PORT_HOST}"
+      echo "URLs:"
+      echo "  Nexus:     http://${NEXUS_HOST}"
+      echo "  SonarQube: http://${SONAR_HOST}"
+      echo "  App:       http://${EZLEARN_HOST}"
     }
-    failure {
-      echo "❌ Pipeline failed"
+    always {
+      sh '''
+        echo "----- CICD NS -----"
+        kubectl -n ${CICD_NS} get pods
+        echo "----- DEV NS -----"
+        kubectl -n ${DEV_NS} get pods
+      ''' || true
     }
   }
 }

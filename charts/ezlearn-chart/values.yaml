@@ -1,0 +1,15 @@
+ingress:
+  enabled: true
+  host: ezlearn.local  # or sonarqube.local, ezlearn.local
+
+persistence:
+  enabled: true
+  existingClaim: "tomcat-webapps-pvc"
+  mountPath: "/usr/local/tomcat/webapps"   # change if your image uses /opt/tomcat/webapps
+
+service:
+  type: ClusterIP     # or NodePort or LoadBalancer
+  port: 8080
+  targetPort: 8080
+  nodePort: null      # e.g., 30080 if type=NodePort
+  annotations: {}
