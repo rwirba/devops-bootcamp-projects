@@ -1,3 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ezlearn
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: ezlearn
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ezlearn
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ezlearn
+    spec:
+      {{- if .Values.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecret }}
+      {{- end }}
       containers:
         - name: ezlearn
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -7,11 +28,6 @@
           env:
             - name: JAVA_OPTS
               value: "-Xms256m -Xmx512m"
-          volumeMounts:
-            {{- if .Values.persistence.enabled }}
-            - name: webapps
-              mountPath: {{ .Values.persistence.mountPath }}
-            {{- end }}
           readinessProbe:
             httpGet: { path: "/", port: {{ .Values.service.targetPort }} }
             initialDelaySeconds: 20
@@ -20,9 +36,14 @@
             httpGet: { path: "/", port: {{ .Values.service.targetPort }} }
             initialDelaySeconds: 60
             periodSeconds: 20
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: webapps
+              mountPath: {{ .Values.persistence.mountPath }}
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
       volumes:
-        {{- if .Values.persistence.enabled }}
         - name: webapps
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim }}
-        {{- end }}
+      {{- end }}

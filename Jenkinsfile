@@ -181,19 +181,13 @@ pipeline {
   }
 
   post {
-    success {
-      echo "URLs:"
-      echo "  Nexus:     http://${NEXUS_HOST}"
-      echo "  SonarQube: http://${SONAR_HOST}"
-      echo "  App:       http://${EZLEARN_HOST}"
-    }
     always {
       sh '''
         echo "----- CICD NS -----"
         kubectl -n ${CICD_NS} get pods
         echo "----- DEV NS -----"
         kubectl -n ${DEV_NS} get pods
-      ''' || true
+      ''' 
     }
   }
 }
