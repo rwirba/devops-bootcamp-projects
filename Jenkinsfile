@@ -9,7 +9,7 @@ pipeline {
   parameters {
     booleanParam(name: 'SKIP_BUILD', defaultValue: true,  description: 'Skip building/pushing ezlearn image (use pre-pushed tag)')
     booleanParam(name: 'BOOTSTRAP_PV', defaultValue: false, description: 'Apply PV/PVC bootstrap (idempotent)')
-    string(name: 'INGRESS_CLASS', defaultValue: 'traefik', description: 'Ingress class (traefik or nginx)')
+    string(name: 'INGRESS_CLASS', defaultValue: 'nginx', description: 'Ingress class (traefik or nginx)')
     string(name: 'EZLEARN_HOST',  defaultValue: 'ezlearn-dev.mitechnology.org', description: 'Ingress host for ezlearn app')
     string(name: 'NEXUS_HOST',    defaultValue: 'nexus.mitechnology.org',       description: 'Ingress host for Nexus')
     string(name: 'SONAR_HOST',    defaultValue: 'sonarqube.mitechnology.org',   description: 'Ingress host for SonarQube')
