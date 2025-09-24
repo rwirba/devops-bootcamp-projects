@@ -60,7 +60,7 @@ pipeline {
         withCredentials([file(credentialsId: 'kubeconfig_ezlearn', variable: 'KCFG')]) {
           sh '''
             export KUBECONFIG="$KCFG"
-            kubectl version --short
+            kubectl version --client
             kubectl get ns
           '''
           script {
