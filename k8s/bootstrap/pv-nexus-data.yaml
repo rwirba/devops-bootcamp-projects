@@ -14,6 +14,6 @@ spec:
       - matchExpressions:
         - key: kubernetes.io/hostname
           operator: In
-          values: [ "ip-172-31-24-17" ]   # <-- your node
+          values: [ "local-node" ]   # <-- your node
   hostPath:
     path: /var/lib/docker/volumes/nexus-data/_data

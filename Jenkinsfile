@@ -19,7 +19,7 @@ pipeline {
     string(name: 'EZLEARN_TAG',   defaultValue: 'latest',    description: 'Tag to deploy for ezlearn app')
 
     string(name: 'K8S_CONTEXT',   defaultValue: '',          description: 'Optional kubectl context (from kubeconfig); leave blank to use current')
-    string(name: 'NODE_HOST', defaultValue: 'ip-xxx-xxx-xxx-xxx', description: 'kubernetes.io/hostname where hostPath PVs live')
+    string(name: 'NODE_HOST', defaultValue: 'local-node', description: 'kubernetes.io/hostname where hostPath PVs live')
   }
 
   environment {
