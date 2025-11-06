@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_CLI_ZIP_URL = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+    }
+
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    echo "Updating package lists..."
+                    sudo apt update
+
+                    echo "Installing prerequisites: unzip, curl, jq, python3-pip..."
+                    sudo apt install -y unzip curl jq python3-pip
+
+                    echo "Downloading AWS CLI v2..."
+                    curl "$AWS_CLI_ZIP_URL" -o "awscliv2.zip"
+
+                    echo "Unzipping AWS CLI installer..."
+                    unzip -q awscliv2.zip
+
+                    echo "Installing AWS CLI..."
+                    sudo ./aws/install
+
+                    echo "Verifying AWS CLI installation..."
+                    aws --version
+                '''
+            }
+        }
+
+        stage('Your Other Stage') {
+            steps {
+                echo 'Now you can use aws, jq, and pip3 in this stage.'
+                sh 'aws --version'
+                sh 'jq --version'
+                sh 'pip3 --version'
+            }
+        }
+    }
+}
